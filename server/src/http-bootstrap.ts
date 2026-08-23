@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import helmet from '@fastify/helmet';
+import cookie from '@fastify/cookie';
 import fastifyStatic from '@fastify/static';
 import { RequestMethod } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -25,6 +26,7 @@ export async function configureHttpApplication(app: NestFastifyApplication): Pro
   const webRoot = resolve(workspaceRoot, 'web/dist');
 
   app.enableShutdownHooks();
+  await app.register(cookie);
   app.useGlobalFilters(new ApiErrorFilter());
   app.setGlobalPrefix('api', {
     exclude: [

@@ -8,6 +8,7 @@ pnpm install
 cp .env.example .env
 docker compose up -d
 pnpm db:migrate
+pnpm db:bootstrap
 pnpm dev
 ```
 
@@ -29,6 +30,7 @@ pnpm dev
 | `pnpm dev:web`                | 只启动 Web                        |
 | `pnpm db:generate`            | 生成 Drizzle migration            |
 | `pnpm db:migrate`             | 执行数据库迁移                    |
+| `pnpm db:bootstrap`           | 同步权限并幂等初始化 Owner        |
 | `pnpm check`                  | 格式、Lint、类型、测试和构建      |
 | `pnpm build`                  | 构建 workspace 项目               |
 | `pnpm smoke:generated`        | 验证 CLI 生成项目和命名替换       |
@@ -39,16 +41,17 @@ pnpm dev
 
 ## Adding an API module
 
-使用 NestJS Module 组织业务能力。Starter 不包含业务模块：
+使用 NestJS Module 组织业务能力。Starter 已预置非行业化 Identity 与 Access Control，
+不包含教育、零售等行业模块：
 
 ```text
 server/src/modules/users/
 ├── users.module.ts
-├── users.controller.ts
-├── users.service.ts
-├── dto/
-├── schemas/
-└── repositories/
+├── public.ts
+├── api/
+├── application/
+├── domain/
+└── infrastructure/persistence/
 ```
 
 也可以从最小模板开始：
@@ -104,7 +107,8 @@ web/src/pages/
 
 ## Shared code
 
-`packages/` 只表示当前应用仓库内部的可选共享空间，不是公共 package 仓库。Starter 不预置任何 package；目录为空不会影响构建、运行或发布。
+`packages/` 只表示当前应用仓库内部的私有共享空间，不是公共 package 仓库。Starter
+当前预置 `packages/contracts`，由 Server 和后续 API Client/前端共同消费。
 
 公共能力应从独立的 package 仓库发布后，通过 npm 依赖使用。应用内部的 `packages/` 只适合放应用私有、跨多个工作区项目共享的代码，例如 API contracts、API client、设计 tokens 或纯业务规则。
 

@@ -6,7 +6,11 @@ Language: [中文](README.md) · English
 
 Starter versions identify the creation baseline only. After creation, each application evolves independently; see the [upgrade guide](docs/upgrading.md) when you want to adopt later foundation changes.
 
-> Current status: phase 0 baseline. This repository has been independently derived from `ts-app-starter@235cfdb`. Reusable business application capabilities will be implemented and accepted incrementally; unfinished capabilities are not treated as delivered features.
+See [Identity and Access Control](docs/identity-access.md) for sessions, CSRF, permissions, and Owner bootstrap.
+
+> Current status: phase 2. The independent baseline, Contracts, database conventions, Identity,
+> and Access Control are delivered. Settings, audit, jobs, integrations, and frontend foundations
+> remain incremental work.
 
 ## 1. Positioning
 
@@ -125,7 +129,7 @@ The recommended boundary is one business application per Git repository. Each ap
     │   └── test/
     ├── admin/                   # React + Vite administration console
     ├── web/                     # React + Vite public web application
-    ├── packages/                # Shared packages, added when needed
+    ├── packages/contracts/      # Private contracts shared by server and future clients
     ├── docker/                  # Caddy / Docker configuration
     ├── deploy/                  # Deployment scripts and environment templates
     ├── .github/workflows/       # CI / Build / Publish / Deploy
@@ -135,7 +139,9 @@ The recommended boundary is one business application per Git repository. Each ap
     ├── pnpm-workspace.yaml
     └── package.json
 
-Add new business capabilities as NestJS Modules in server first instead of extracting them into independent packages prematurely. Only code that is genuinely shared across multiple projects and has stable boundaries should move into packages/.
+Add new business capabilities as NestJS Modules in server first instead of extracting them into
+independent packages prematurely. `packages/` is a private application workspace, not the home of
+published `@lingcoo-tech/*` packages; Contracts is the only package currently included.
 
 ## 7. How to build a new application with it
 
@@ -162,6 +168,7 @@ Configure the local database, ports, and other required variables in .env. Never
 
     docker compose up -d
     pnpm db:migrate
+    pnpm db:bootstrap
     pnpm dev
 
 This starts the local API, Admin, Web, and PostgreSQL development environment. Start the Worker separately when needed.

@@ -24,8 +24,9 @@ Developer GitHub repository
 1. 拉取指定 commit SHA 的镜像；
 2. 启动或等待 PostgreSQL；
 3. 执行数据库迁移；
-4. 启动 API、Worker 和 Caddy；
-5. 等待健康检查并执行冒烟验证。
+4. 同步权限并幂等初始化 Owner；
+5. 启动 API、Worker 和 Caddy；
+6. 等待健康检查并执行冒烟验证。
 
 ## Prepare a container registry first
 
@@ -103,6 +104,10 @@ cp deploy/production.env.example /path/to/deployment/.env
 ```
 
 数据库密码必须随机生成，并且与 `DATABASE_URL` 中的密码一致。`.env` 不应提交到 Git。
+
+首次部署应设置随机的 `BOOTSTRAP_OWNER_PASSWORD`。部署脚本在 Migration 后运行显式
+Bootstrap；确认 Owner 可以登录后，从生产 `.env` 删除 Owner 密码。后续部署仍会同步代码中
+声明的系统权限，但不会重置既有 Owner 密码。
 
 ## Image tags and rollback
 

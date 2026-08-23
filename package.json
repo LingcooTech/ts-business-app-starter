@@ -9,8 +9,8 @@
     "node": ">=24.0.0 <25"
   },
   "scripts": {
-    "dev": "corepack pnpm --parallel --filter @ts-business-app-starter/server --filter @ts-business-app-starter/admin --filter @ts-business-app-starter/web dev",
-    "dev:server": "corepack pnpm --filter @ts-business-app-starter/server dev",
+    "dev": "corepack pnpm --filter @ts-business-app-starter/contracts build && corepack pnpm --parallel --filter @ts-business-app-starter/server --filter @ts-business-app-starter/admin --filter @ts-business-app-starter/web dev",
+    "dev:server": "corepack pnpm --filter @ts-business-app-starter/contracts build && corepack pnpm --filter @ts-business-app-starter/server dev",
     "dev:worker": "corepack pnpm --filter @ts-business-app-starter/server dev:worker",
     "dev:admin": "corepack pnpm --filter @ts-business-app-starter/admin dev",
     "dev:web": "corepack pnpm --filter @ts-business-app-starter/web dev",
@@ -28,9 +28,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "corepack pnpm check:starter-version && corepack pnpm format:check && corepack pnpm lint && corepack pnpm typecheck && corepack pnpm test && corepack pnpm build",
-    "db:generate": "corepack pnpm --filter @ts-business-app-starter/server db:generate",
+    "db:generate": "corepack pnpm --filter @ts-business-app-starter/contracts build && corepack pnpm --filter @ts-business-app-starter/server db:generate",
     "db:migrate": "corepack pnpm --filter @ts-business-app-starter/server db:migrate",
-    "db:studio": "corepack pnpm --filter @ts-business-app-starter/server db:studio",
+    "db:bootstrap": "corepack pnpm --filter @ts-business-app-starter/contracts build && corepack pnpm --filter @ts-business-app-starter/server db:bootstrap",
+    "db:studio": "corepack pnpm --filter @ts-business-app-starter/contracts build && corepack pnpm --filter @ts-business-app-starter/server db:studio",
     "start": "corepack pnpm --filter @ts-business-app-starter/server start:prod",
     "start:worker": "corepack pnpm --filter @ts-business-app-starter/server start:worker"
   },

@@ -50,10 +50,10 @@ server/src/modules/<module>/
 简单模块不需要制造空层级。Controller、应用编排、数据库访问和第三方 SDK
 不能堆入同一文件。跨模块依赖只能通过显式公开的 Provider、Token、事件或契约连接。
 
-Business Starter 计划提供以下非行业化模块：
+Business Starter 提供或计划提供以下非行业化模块：
 
-- identity；
-- access-control；
+- identity（已交付）；
+- access-control（已交付）；
 - settings；
 - audit；
 - jobs 与 transactional outbox；
@@ -63,6 +63,11 @@ Business Starter 计划提供以下非行业化模块：
 - payments。
 
 这些模块不拥有教育、零售、订阅授权或其他行业数据模型。
+
+Identity 使用 HttpOnly Cookie 与可撤销的 PostgreSQL 服务端会话；数据库只保存会话和
+一次性操作令牌的 SHA-256 摘要。Access Control 使用默认拒绝的全局 Guard，写请求还需
+验证与会话绑定的 CSRF Token。角色与账户、认证相互独立，Starter 只同步通用权限和系统
+Owner，不预置行业角色。
 
 ## Runtime topology
 

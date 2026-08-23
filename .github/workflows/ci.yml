@@ -53,6 +53,8 @@ jobs:
       - run: pnpm db:migrate
       - name: Verify migration idempotency
         run: pnpm db:migrate
+      - name: Verify permission bootstrap idempotency
+        run: pnpm db:bootstrap && pnpm db:bootstrap
       - run: corepack pnpm smoke:generated
       - run: corepack pnpm smoke:module-generator
       - run: corepack pnpm check:boundaries

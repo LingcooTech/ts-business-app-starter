@@ -108,7 +108,7 @@ try {
   if (failures.length > 0)
     throw new Error(`generated project contains starter markers:\n${failures.join('\n')}`);
 
-  execFileSync('corepack', ['pnpm', 'install', '--offline', '--frozen-lockfile'], {
+  execFileSync('corepack', ['pnpm', 'install', '--prefer-offline', '--frozen-lockfile'], {
     cwd: project,
     stdio: 'inherit',
   });

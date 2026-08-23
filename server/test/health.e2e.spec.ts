@@ -7,10 +7,12 @@ import { AppModule } from '../src/app.module';
 import { configureHttpApplication } from '../src/http-bootstrap';
 import { DatabaseService } from '../src/infrastructure/database/database.service';
 import { ZodValidationPipe } from '../src/common/http/zod-validation.pipe';
+import { Public } from '../src/common/auth/auth.decorators';
 
 const contractSchema = z.object({ name: z.string().trim().min(1) });
 
 @Controller('contract')
+@Public()
 class ContractController {
   @Post()
   create(@Body(new ZodValidationPipe(contractSchema)) body: z.infer<typeof contractSchema>) {

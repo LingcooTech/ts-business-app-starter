@@ -5,7 +5,7 @@
 Starter 的验证项目不是用来完整迁移 Edu 或 Retail 业务，而是验证：
 
 1. `ts-business-app-starter` 能否通过 npx 生成独立应用；
-2. 生成应用能否在离线复用 CI 已安装依赖的前提下完成冻结锁文件安装和 `pnpm check`；
+2. 生成应用能否优先复用本地缓存并以冻结锁文件完成安装和 `pnpm check`；
 3. 独立应用能否消费已发布的 `@lingcoo-tech/*` package；
 4. 多个真实项目是否暴露出稳定、值得公共化的重复能力。
 
@@ -16,7 +16,7 @@ Starter 的验证项目不是用来完整迁移 Edu 或 Retail 业务，而是�
 | Business CLI 本地模板生成      | 通过 |
 | 模板身份和维护者文件清理       | 通过 |
 | workspace 依赖和构建产物未复制 | 通过 |
-| 冻结锁文件离线安装             | 通过 |
+| 冻结锁文件安装（优先缓存）     | 通过 |
 | 生成项目 Format/Lint/Typecheck | 通过 |
 | 生成项目测试和构建             | 通过 |
 | 模块生成器与边界检查           | 通过 |
@@ -69,4 +69,5 @@ Edu、Retail 和 Core 的历史实现只用于证明需求重复和公共包边�
 - 可以在独立 package 中测试和版本化；
 - 被第二个应用实际消费后仍然没有明显定制分支。
 
-当前阶段不新增跨仓库公共 package。下一阶段在 Business Starter 内实现 Identity 与 Access Control，并按真实使用情况消费现有安全基础包。
+当前阶段不新增跨仓库公共 package。Identity 已真实消费 `@lingcoo-tech/security` 的密码
+哈希能力，NestJS 会话和权限编排保留在 Business Starter。下一阶段实现 Settings 与 Audit。

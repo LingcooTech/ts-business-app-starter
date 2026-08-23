@@ -16,6 +16,8 @@ npx @lingcoo-tech/create-ts-business-app-starter@latest my-business-app
 
 ### 阶段 0：独立仓库基线
 
+状态：已完成。
+
 - 派生完整基础仓库；
 - 调整仓库、workspace、容器和 CLI 身份；
 - 记录 Base Starter Commit；
@@ -24,12 +26,16 @@ npx @lingcoo-tech/create-ts-business-app-starter@latest my-business-app
 
 ### 阶段 1：Contracts 与数据库约定
 
+状态：已完成。
+
 - 建立 `packages/contracts`；
 - 固定错误、分页、时间、ID 和公开契约；
 - 固定模块 Schema 与 Migration 所有权；
 - 扩展模块生成器和边界检查。
 
 ### 阶段 2：身份与权限
+
+状态：已完成。
 
 - IdentityModule；
 - AccessControlModule；

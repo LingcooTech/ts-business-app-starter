@@ -26,6 +26,7 @@ corepack enable
 cp .env.example .env
 docker compose up -d
 pnpm db:migrate
+pnpm db:bootstrap
 pnpm dev
 ```
 
@@ -39,6 +40,10 @@ pnpm dev
 | PostgreSQL | `localhost:5438`        |
 
 开发业务时，后端增加 NestJS Module，前端增加页面，数据库变化通过 Drizzle Schema 和 Migration 管理。
+
+首次执行 Bootstrap 前，在 `.env` 中替换 `BOOTSTRAP_OWNER_EMAIL` 和
+`BOOTSTRAP_OWNER_PASSWORD`。命令会同步系统权限、创建或复用 Owner，并分配系统 Owner
+角色；它不会覆盖已有账户的密码。成功后应从生产环境移除 Owner 密码。
 
 ## 3. 创建自己的 GitHub 仓库
 

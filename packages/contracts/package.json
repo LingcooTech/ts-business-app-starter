@@ -4,9 +4,11 @@
   "private": true,
   "description": "Framework-neutral API contracts shared by the Business Starter server and clients.",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./src/index.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     }

@@ -3,11 +3,13 @@ import { describe, expect, it } from 'vitest';
 
 import {
   apiErrorResponseSchema,
+  sessionIdentitySchema,
   createPaginatedResponseSchema,
   createSortQuerySchema,
   isoDateTimeSchema,
   paginationMeta,
   paginationQuerySchema,
+  permissionKeySchema,
 } from './index.js';
 
 describe('shared API contracts', () => {
@@ -62,5 +64,28 @@ describe('shared API contracts', () => {
   it('requires timezone-aware ISO date-time values', () => {
     expect(isoDateTimeSchema.parse('2026-08-23T15:30:00+08:00')).toBe('2026-08-23T15:30:00+08:00');
     expect(() => isoDateTimeSchema.parse('2026-08-23T15:30:00')).toThrow();
+  });
+
+  it('validates the authenticated identity response without exposing credentials', () => {
+    const identity = sessionIdentitySchema.parse({
+      user: {
+        id: 'fdda765f-fc57-5604-a269-52a7df8164ec',
+        email: 'OWNER@EXAMPLE.COM',
+        displayName: null,
+        status: 'active',
+        emailVerifiedAt: '2026-08-23T15:30:00+08:00',
+        createdAt: '2026-08-23T15:00:00+08:00',
+      },
+      session: { expiresAt: '2026-08-30T15:30:00+08:00' },
+      csrfToken: 'csrf-token-with-at-least-thirty-two-characters',
+    });
+
+    expect(identity.user.email).toBe('owner@example.com');
+    expect(identity).not.toHaveProperty('passwordHash');
+  });
+
+  it('accepts namespaced permission keys and rejects role names', () => {
+    expect(permissionKeySchema.parse('accounts.read')).toBe('accounts.read');
+    expect(() => permissionKeySchema.parse('admin')).toThrow();
   });
 });

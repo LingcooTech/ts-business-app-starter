@@ -7,8 +7,10 @@
 Starter 的版本只代表创建基线。应用创建后独立维护；需要吸收后续基础设施改进时，请参阅[升级指南](docs/upgrading.md)。
 
 Starter 的长期定位和验收标准见[质量标准](docs/quality-bar.md)。
+身份、会话、CSRF、权限与 Owner 初始化见[Identity 与 Access Control](docs/identity-access.md)。
 
-> 当前状态：阶段 0 基线。仓库已经从 `ts-app-starter@235cfdb` 独立派生，通用业务能力将按实施计划逐项完成并验收；未完成的能力不会在文档中冒充已交付功能。
+> 当前状态：阶段 2。独立仓库基线、Contracts、数据库约定、Identity 与 Access Control
+> 已完成；设置、审计、任务、集成和前端框架仍按实施计划逐项交付。
 
 ## 1. 项目定位
 
@@ -127,7 +129,7 @@ Admin 和 Web 是默认的两个空白前端入口；其他终端可以在业务
     │   └── test/
     ├── admin/                   # React + Vite 管理后台
     ├── web/                     # React + Vite 公共 Web
-    ├── packages/                # 应用内部共享包，按需使用，不预置内容
+    ├── packages/contracts/      # Server、API Client 与前端共享的私有契约
     ├── docker/                  # Caddy / Docker 配置
     ├── deploy/                  # 部署脚本和环境模板
     ├── .github/workflows/       # CI / Build / Publish / Deploy
@@ -137,7 +139,9 @@ Admin 和 Web 是默认的两个空白前端入口；其他终端可以在业务
     ├── pnpm-workspace.yaml
     └── package.json
 
-新业务优先作为 NestJS Module 加入 server，而不是先抽成独立 package。`packages/` 只是当前应用仓库内部可选的 workspace package 目录，不是 `@lingcoo-tech/*` 公共 package 的存放位置。只有真正需要被当前应用的多个工作区项目共享、并且边界已经稳定的代码，才进入 packages/。没有真实共享需求时，保持目录为空即可。
+新业务优先作为 NestJS Module 加入 server，而不是先抽成独立 package。`packages/` 是当前
+应用仓库内部的私有 workspace，不是 `@lingcoo-tech/*` 公共 package 的存放位置。目前只
+预置跨 Server、API Client 和前端使用的 Contracts。
 
 ## 7. 如何使用它开发一个新应用？
 
@@ -164,6 +168,7 @@ CLI 会下载模板、替换项目名称、删除原 Git 历史、初始化新 G
 
     docker compose up -d
     pnpm db:migrate
+    pnpm db:bootstrap
     pnpm dev
 
 启动后即可获得 API、Admin、Web 和 PostgreSQL 的本地开发环境。Worker 可以按需单独启动。

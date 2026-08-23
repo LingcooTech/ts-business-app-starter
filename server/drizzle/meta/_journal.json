@@ -8,6 +8,13 @@
       "when": 1786766343472,
       "tag": "0000_baseline",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787473603401,
+      "tag": "0001_great_mastermind",
+      "breakpoints": true
     }
   ]
 }

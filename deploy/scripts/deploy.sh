@@ -55,6 +55,7 @@ while [ "${attempt}" -le 30 ]; do
 done
 
 docker compose -f "${DEPLOY_COMPOSE_FILE}" run --rm --no-deps api node server/dist/migrate.js
+docker compose -f "${DEPLOY_COMPOSE_FILE}" run --rm --no-deps api node server/dist/bootstrap.js
 docker compose -f "${DEPLOY_COMPOSE_FILE}" up -d --no-deps api worker
 
 api_container_id="$(docker compose -f "${DEPLOY_COMPOSE_FILE}" ps -q api)"

@@ -1,3 +1,3 @@
-// Business modules will own and export their Drizzle tables from
-// server/src/modules/<module>/*.schema.ts. Phase one intentionally has no tables.
+// Drizzle discovers module-owned schemas under server/src/modules/**/infrastructure/persistence.
+// This file intentionally owns no tables; global infrastructure must not become a business schema.
 export {};
