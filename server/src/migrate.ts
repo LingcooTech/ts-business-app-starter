@@ -1,12 +1,13 @@
-import 'dotenv/config';
-
 import { resolve } from 'node:path';
 
+import { config as loadEnvironment } from 'dotenv';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Pool } from 'pg';
 
 import { validateEnvironment } from './infrastructure/config/environment';
+
+loadEnvironment({ path: ['.env', '../.env'] });
 
 async function run(): Promise<void> {
   const environment = validateEnvironment(process.env);

@@ -19,6 +19,10 @@ pnpm dev
 - Web：`http://localhost:5174/`
 - OpenAPI：`http://localhost:8090/api/docs`
 
+如果本机已有项目占用 PostgreSQL 默认端口 `5438`，同时修改 `.env` 中的
+`POSTGRES_PORT` 和 `DATABASE_URL` 端口，例如都改为 `5439`。不要让两个应用复用
+同一个开发数据库。
+
 ## Commands
 
 | Command                       | Purpose                           |
