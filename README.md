@@ -8,9 +8,10 @@ Starter 的版本只代表创建基线。应用创建后独立维护；需要吸
 
 Starter 的长期定位和验收标准见[质量标准](docs/quality-bar.md)。
 身份、会话、CSRF、权限与 Owner 初始化见[Identity 与 Access Control](docs/identity-access.md)。
+前端 workspace、路由、会话和扩展约定见[前端应用基础](docs/frontend-foundation.md)。
 
-> 当前状态：阶段 2。独立仓库基线、Contracts、数据库约定、Identity 与 Access Control
-> 已完成；设置、审计、任务、集成和前端框架仍按实施计划逐项交付。
+> 当前状态：阶段 3。独立仓库基线、Contracts、Identity、Access Control、共享 UI、
+> API Client、Admin 与 Web 应用壳已完成；设置、审计、任务和外部服务按实施计划逐项交付。
 
 ## 1. 项目定位
 
@@ -53,7 +54,8 @@ TS Business App Starter 重点解决的是选型、组合、规范和工程化�
 | 数据库    | PostgreSQL        | 保存核心业务数据                      |
 | 数据访问  | Drizzle ORM       | 以 TypeScript 管理数据库访问和 Schema |
 | 数据校验  | Zod / JSON Schema | 校验配置和接口数据                    |
-| 前端      | React + Vite      | 构建空白管理后台和 Web 入口           |
+| 前端      | React + Vite      | 构建管理后台和公共 Web 应用           |
+| 请求状态  | TanStack Query    | 管理服务端状态、缓存与变更            |
 | Workspace | pnpm              | 管理依赖和多工程 Workspace            |
 | 应用交付  | Docker            | 构建可重复部署的运行镜像              |
 | CI/CD     | GitHub Actions    | 自动检查、测试、构建和发布            |
@@ -109,7 +111,7 @@ TS Business App Starter 默认采用尽可能简单的运行结构，不要求 K
         ├── Docker / Docker Compose
         └── GitHub Actions
 
-Admin 和 Web 是默认的两个空白前端入口；其他终端可以在业务项目中通过 API 接入。Server 中 API 负责实时请求，Worker 只提供通用的独立运行入口，不预置队列或业务任务。
+Admin 和 Web 默认提供路由、会话恢复、错误边界、共享 UI 和真实账户流程；其他终端也可以在业务项目中通过 API 接入。Server 中 API 负责实时请求，Worker 只提供通用的独立运行入口，不预置队列或业务任务。
 
 ## 6. Repository 结构
 
@@ -129,7 +131,11 @@ Admin 和 Web 是默认的两个空白前端入口；其他终端可以在业务
     │   └── test/
     ├── admin/                   # React + Vite 管理后台
     ├── web/                     # React + Vite 公共 Web
-    ├── packages/contracts/      # Server、API Client 与前端共享的私有契约
+    ├── packages/
+    │   ├── contracts/           # Server、API Client 与前端共享的契约
+    │   ├── api-client/          # 校验响应、会话、CSRF 与 React Query 集成
+    │   ├── design-tokens/       # Admin 与 Web 共享的视觉 Token
+    │   └── ui/                  # 无业务语义的 React 交互原语
     ├── docker/                  # Caddy / Docker 配置
     ├── deploy/                  # 部署脚本和环境模板
     ├── .github/workflows/       # CI / Build / Publish / Deploy
@@ -140,8 +146,8 @@ Admin 和 Web 是默认的两个空白前端入口；其他终端可以在业务
     └── package.json
 
 新业务优先作为 NestJS Module 加入 server，而不是先抽成独立 package。`packages/` 是当前
-应用仓库内部的私有 workspace，不是 `@lingcoo-tech/*` 公共 package 的存放位置。目前只
-预置跨 Server、API Client 和前端使用的 Contracts。
+应用仓库内部的私有 workspace，不是 `@lingcoo-tech/*` 公共 package 的存放位置。当前
+预置 Contracts、API Client、Design Tokens 和 UI；页面路由和资源页仍分别属于 Admin/Web。
 
 ## 7. 如何使用它开发一个新应用？
 

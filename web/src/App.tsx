@@ -1,20 +1,28 @@
+import { Route, Routes } from 'react-router-dom';
+
+import { RequireSession } from './app/guards';
+import { NotFoundPage } from './app/not-found-page';
+import { SiteLayout } from './app/site-layout';
+import { AccountPage } from './features/account/page';
+import { LoginPage } from './features/auth/login-page';
+import { ForgotPasswordPage, ResetPasswordPage } from './features/auth/recovery-pages';
+import { VerifyEmailPage } from './features/auth/verify-email-page';
+import { HomePage } from './features/home/page';
+
 export function App() {
   return (
-    <main className="landing">
-      <div className="glow glow--one" />
-      <div className="glow glow--two" />
-      <section className="hero">
-        <span className="badge">MODERN TYPESCRIPT APPLICATION</span>
-        <h1>业务从这里开始，框架到这里为止。</h1>
-        <p>
-          NestJS、Fastify、PostgreSQL、Drizzle 与 React 已完成最小组合。当前页面不承载任何行业模型。
-        </p>
-        <div className="stack" aria-label="Technology stack">
-          {['NestJS', 'Fastify', 'Drizzle', 'React', 'Docker'].map((item) => (
-            <span key={item}>{item}</span>
-          ))}
-        </div>
-      </section>
-    </main>
+    <Routes>
+      <Route element={<SiteLayout />}>
+        <Route index element={<HomePage />} />
+        <Route path="login" element={<LoginPage />} />
+        <Route path="forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="reset-password" element={<ResetPasswordPage />} />
+        <Route path="verify-email" element={<VerifyEmailPage />} />
+        <Route element={<RequireSession />}>
+          <Route path="account" element={<AccountPage />} />
+        </Route>
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
+    </Routes>
   );
 }

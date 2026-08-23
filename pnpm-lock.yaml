@@ -35,12 +35,24 @@ importers:
 
   admin:
     dependencies:
+      '@ts-business-app-starter/api-client':
+        specifier: workspace:*
+        version: link:../packages/api-client
+      '@ts-business-app-starter/design-tokens':
+        specifier: workspace:*
+        version: link:../packages/design-tokens
+      '@ts-business-app-starter/ui':
+        specifier: workspace:*
+        version: link:../packages/ui
       react:
         specifier: 19.2.8
         version: 19.2.8
       react-dom:
         specifier: 19.2.8
         version: 19.2.8(react@19.2.8)
+      react-router-dom:
+        specifier: 7.18.2
+        version: 7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
     devDependencies:
       '@types/react':
         specifier: 19.2.18
@@ -57,6 +69,34 @@ importers:
       vite:
         specifier: 8.2.1
         version: 8.2.1(@types/node@24.5.2)(esbuild@0.28.2)(terser@5.50.0)(tsx@4.23.12)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@24.5.2)(vite@8.2.1(@types/node@24.5.2)(esbuild@0.28.2)(terser@5.50.0)(tsx@4.23.12))
+
+  packages/api-client:
+    dependencies:
+      '@tanstack/react-query':
+        specifier: 5.102.0
+        version: 5.102.0(react@19.2.8)
+      '@ts-business-app-starter/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/react':
+        specifier: 19.2.18
+        version: 19.2.18
+      react:
+        specifier: 19.2.8
+        version: 19.2.8
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@24.5.2)(vite@8.2.1(@types/node@24.5.2)(esbuild@0.28.2)(terser@5.50.0)(tsx@4.23.12))
 
   packages/contracts:
     dependencies:
@@ -64,6 +104,36 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
     devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@24.5.2)(vite@8.2.1(@types/node@24.5.2)(esbuild@0.28.2)(terser@5.50.0)(tsx@4.23.12))
+
+  packages/design-tokens:
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@24.5.2)(vite@8.2.1(@types/node@24.5.2)(esbuild@0.28.2)(terser@5.50.0)(tsx@4.23.12))
+
+  packages/ui:
+    devDependencies:
+      '@types/react':
+        specifier: 19.2.18
+        version: 19.2.18
+      '@types/react-dom':
+        specifier: 19.2.4
+        version: 19.2.4(@types/react@19.2.18)
+      react:
+        specifier: 19.2.8
+        version: 19.2.8
+      react-dom:
+        specifier: 19.2.8
+        version: 19.2.8(react@19.2.8)
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -152,12 +222,24 @@ importers:
 
   web:
     dependencies:
+      '@ts-business-app-starter/api-client':
+        specifier: workspace:*
+        version: link:../packages/api-client
+      '@ts-business-app-starter/design-tokens':
+        specifier: workspace:*
+        version: link:../packages/design-tokens
+      '@ts-business-app-starter/ui':
+        specifier: workspace:*
+        version: link:../packages/ui
       react:
         specifier: 19.2.8
         version: 19.2.8
       react-dom:
         specifier: 19.2.8
         version: 19.2.8(react@19.2.8)
+      react-router-dom:
+        specifier: 7.18.2
+        version: 7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
     devDependencies:
       '@types/react':
         specifier: 19.2.18
@@ -174,6 +256,9 @@ importers:
       vite:
         specifier: 8.2.1
         version: 8.2.1(@types/node@24.5.2)(esbuild@0.28.2)(terser@5.50.0)(tsx@4.23.12)
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@24.5.2)(vite@8.2.1(@types/node@24.5.2)(esbuild@0.28.2)(terser@5.50.0)(tsx@4.23.12))
 
 packages:
   '@angular-devkit/core@19.2.24':
@@ -1751,6 +1836,20 @@ packages:
       {
         integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==,
       }
+
+  '@tanstack/query-core@5.102.0':
+    resolution:
+      {
+        integrity: sha512-tvBzr11Q7StuMCEsIJdqX8TAWt6WZIzfw/yrSAjObZDerwTTPeCxeLXN2R8ZSn4ZxFpQV819Xn8QmoO+vtnDvw==,
+      }
+
+  '@tanstack/react-query@5.102.0':
+    resolution:
+      {
+        integrity: sha512-0GyVyEcGt9M7jHPCua16hNVtstUXE2R4HsnNubFYcDs7DJaLzh1dSiXsADDU/cNn/SqrLfa0vRKyjUmbx4rZLA==,
+      }
+    peerDependencies:
+      react: ^18 || ^19
 
   '@tokenizer/inflate@0.4.1':
     resolution:
@@ -3888,6 +3987,29 @@ packages:
     peerDependencies:
       react: ^19.2.8
 
+  react-router-dom@7.18.2:
+    resolution:
+      {
+        integrity: sha512-AIKJ/jgGlFb3EbfCXk5Gzshiwt+l3mqbCrNjmEWMMjqQxNJ3svBa6bgzFyCC2Sw3RA0VWF1kg3uQf2OFhxb8hw==,
+      }
+    engines: { node: '>=20.0.0' }
+    peerDependencies:
+      react: '>=18'
+      react-dom: '>=18'
+
+  react-router@7.18.2:
+    resolution:
+      {
+        integrity: sha512-aUVMjFm3GAPTTZL7oYr5E7ETiqfQCHRLH+B+5afnICvf0r7kkK4eR6SMuwbSTJw/7t+12khT/Kahij49fqOCIg==,
+      }
+    engines: { node: '>=20.0.0' }
+    peerDependencies:
+      react: '>=18'
+      react-dom: '>=18'
+    peerDependenciesMeta:
+      react-dom:
+        optional: true
+
   react@19.2.8:
     resolution:
       {
@@ -5434,6 +5556,13 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
+  '@tanstack/query-core@5.102.0': {}
+
+  '@tanstack/react-query@5.102.0(react@19.2.8)':
+    dependencies:
+      '@tanstack/query-core': 5.102.0
+      react: 19.2.8
+
   '@tokenizer/inflate@0.4.1(supports-color@8.1.1)':
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
@@ -6661,6 +6790,20 @@ snapshots:
     dependencies:
       react: 19.2.8
       scheduler: 0.27.0
+
+  react-router-dom@7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+    dependencies:
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+      react-router: 7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+
+  react-router@7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+    dependencies:
+      cookie: 1.1.1
+      react: 19.2.8
+      set-cookie-parser: 2.7.2
+    optionalDependencies:
+      react-dom: 19.2.8(react@19.2.8)
 
   react@19.2.8: {}
 

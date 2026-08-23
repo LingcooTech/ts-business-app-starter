@@ -77,16 +77,18 @@ pnpm generate:module users
 管理后台页面放在：
 
 ```text
-admin/src/pages/
+admin/src/features/<feature>/
 ```
 
 公共页面放在：
 
 ```text
-web/src/pages/
+web/src/features/<feature>/
 ```
 
-前端通过 HTTP API 访问服务端。页面级数据请求、错误状态和加载状态应该显式处理。
+前端通过 API Client 访问服务端。跨端 API 输入输出放入 Contracts，复用交互原语放入 UI；
+页面级数据请求、权限、空状态、错误状态和加载状态必须显式处理。完整边界见
+[前端应用基础](frontend-foundation.md)。
 
 ## HTTP conventions
 

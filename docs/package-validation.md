@@ -24,17 +24,16 @@ Starter 的验证项目不是用来完整迁移 Edu 或 Retail 业务，而是�
 
 Edu、Retail 和 Core 的历史实现只用于证明需求重复和公共包边界，不视为已经由 Business Starter 生成或迁移完成。
 
-## 内部 Contracts workspace
+## 内部前端与契约 workspaces
 
-`packages/contracts` 是 Business Starter 仓库内部的私有 workspace，目前提供：
+Business Starter 当前提供四个只随应用源码演进的私有 workspace：
 
-- API Error Envelope；
-- Page/PageSize 分页与元数据；
-- 模块自定义排序字段；
-- UUID 和带时区 ISO 8601 时间；
-- 5 个契约测试和独立类型检查、构建。
+- `contracts`：错误、身份、权限、分页、UUID 和带时区时间契约；
+- `api-client`：响应校验、统一错误、Cookie、CSRF 与 React Query hooks；
+- `design-tokens`：Admin/Web 共用的视觉基础；
+- `ui`：表单、表格、弹窗、通知、反馈与错误边界。
 
-它不属于 `ts-app-packages`，也不独立发布。
+它们不属于 `ts-app-packages`，不独立发布，也不包含 NestJS 或行业业务逻辑。
 
 ## 当前四个 package 的结论
 

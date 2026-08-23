@@ -43,14 +43,26 @@ npx @lingcoo-tech/create-ts-business-app-starter@latest my-business-app
 - 登录、退出、身份恢复、验证和密码重置；
 - Bootstrap Owner 与权限同步。
 
-### 阶段 3：设置与审计
+### 阶段 3：共享前端基础、Admin 与 Web
+
+状态：已完成。
+
+- API Client、Design Tokens 与 UI 私有 workspace；
+- 运行时响应契约校验、Cookie 会话与 CSRF；
+- TanStack Query 服务端状态管理；
+- Admin Shell、真实登录、身份恢复、权限菜单和账户安全；
+- Web Shell、登录、密码恢复、邮箱验证和账户中心；
+- 共享表格、表单、弹窗、通知、错误边界和响应式布局；
+- 生产静态托管与 Admin/Web SPA 深层路由。
+
+### 阶段 4：设置与审计
 
 - SettingsModule；
 - 数据库覆盖与环境变量兜底；
 - AES-GCM、脱敏和密钥轮换；
 - AuditModule 与管理查询。
 
-### 阶段 4：任务、Outbox、邮件和通知
+### 阶段 5：任务、Outbox、邮件和通知
 
 - PostgreSQL Jobs；
 - 自动重试、退避、超时恢复和死信；
@@ -59,14 +71,14 @@ npx @lingcoo-tech/create-ts-business-app-starter@latest my-business-app
 - NotificationsModule；
 - 对应 Admin 页面。
 
-### 阶段 5：对象存储
+### 阶段 6：对象存储
 
 - ObjectStoragePort；
 - 本地开发和七牛 Adapter；
 - 上传授权、安全限制和对象元数据；
 - 配置测试和媒体选择器。
 
-### 阶段 6：支付
+### 阶段 7：支付
 
 - Payment Provider Port；
 - Mock、支付宝和微信支付 API v3 Adapter；
@@ -74,27 +86,15 @@ npx @lingcoo-tech/create-ts-business-app-starter@latest my-business-app
 - Outbox 支付事件；
 - 支付管理后台。
 
-### 阶段 7：内部前端 Workspace
-
-- API Client；
-- Design Tokens；
-- UI；
-- Storybook、组件测试和无障碍测试。
-
-### 阶段 8：Admin 与 Web
-
-- Admin Shell、权限路由和资源页范式；
-- Web Shell、认证和账户中心；
-- 用户、角色、设置、集成、支付、通知、任务和审计页面；
-- Playwright E2E。
-
-### 阶段 9：产品化交付
+### 阶段 8：产品化交付
 
 - 创建 CLI；
 - 包名和环境变量替换；
 - 迁移和管理员初始化；
 - Docker、CI、镜像和部署；
 - 生成项目和升级文档验收。
+
+各后续模块必须同步增加 Admin/Web 可见页面与浏览器关键流程测试，不再把前端集中到最后补做。
 
 ## 3. 单模块门禁
 

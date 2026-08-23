@@ -9,14 +9,19 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ts-business-app-starter/api-client": "workspace:*",
+    "@ts-business-app-starter/design-tokens": "workspace:*",
+    "@ts-business-app-starter/ui": "workspace:*",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "react-router-dom": "7.18.2"
   },
   "devDependencies": {
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "@vitejs/plugin-react": "6.0.5",
     "typescript": "5.9.3",
-    "vite": "8.2.1"
+    "vite": "8.2.1",
+    "vitest": "4.1.10"
   }
 }

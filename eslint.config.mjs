@@ -27,7 +27,12 @@ export default tseslint.config(
     },
   },
   {
-    files: ['admin/**/*.{ts,tsx}', 'web/**/*.{ts,tsx}'],
+    files: [
+      'admin/**/*.{ts,tsx}',
+      'web/**/*.{ts,tsx}',
+      'packages/api-client/**/*.{ts,tsx}',
+      'packages/ui/**/*.{ts,tsx}',
+    ],
     languageOptions: {
       globals: globals.browser,
     },

@@ -1,0 +1,35 @@
+{
+  "name": "@ts-business-app-starter/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Validated browser API client and React Query integration.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./src/index.tsx",
+  "exports": {
+    ".": {
+      "types": "./src/index.tsx",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "5.102.0",
+    "@ts-business-app-starter/contracts": "workspace:*",
+    "zod": "4.4.3"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.18",
+    "react": "19.2.8",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  }
+}

@@ -20,7 +20,16 @@ clients  ────────▶  services  ────────▶  dat
 - `admin/`：管理后台；
 - `web/`：公共 Web 应用。
 
-它们使用 React、Vite 和 TypeScript 构建。客户端通过 HTTP API 与后端通信，不直接访问 PostgreSQL。
+它们使用 React、Vite、React Router 和 TypeScript 构建。客户端通过 HTTP API 与后端通信，
+不直接访问 PostgreSQL。两个客户端共享四个私有 workspace：
+
+- `contracts`：请求、响应与错误契约；
+- `api-client`：运行时响应校验、Cookie 会话、CSRF 和 TanStack Query；
+- `design-tokens`：颜色、间距、圆角、阴影与响应式约定；
+- `ui`：按钮、表单、表格、弹窗、通知、反馈和错误边界。
+
+Admin 负责权限驱动的导航、受保护路由和后台页面编排；Web 负责公共页面、登录、密码恢复、
+邮箱验证和账户中心。生产环境由 API 容器托管构建产物，并为两个应用提供独立 SPA 深层路由回退。
 
 ### Services
 

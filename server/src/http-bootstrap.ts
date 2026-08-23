@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import helmet from '@fastify/helmet';
@@ -45,6 +45,7 @@ export async function configureHttpApplication(app: NestFastifyApplication): Pro
     await app.register(fastifyStatic, {
       root: adminRoot,
       prefix: '/admin/',
+      wildcard: false,
     });
   }
   if (existsSync(webRoot)) {
@@ -52,16 +53,51 @@ export async function configureHttpApplication(app: NestFastifyApplication): Pro
       root: webRoot,
       prefix: '/',
       decorateReply: !existsSync(adminRoot),
+      wildcard: false,
     });
   }
 
-  app
-    .getHttpAdapter()
-    .getInstance()
-    .addHook('onRequest', (request, reply, done) => {
-      reply.header('x-request-id', request.id || randomUUID());
-      done();
+  const adminIndex = existsSync(resolve(adminRoot, 'index.html'))
+    ? readFileSync(resolve(adminRoot, 'index.html'), 'utf8')
+    : null;
+  const webIndex = existsSync(resolve(webRoot, 'index.html'))
+    ? readFileSync(resolve(webRoot, 'index.html'), 'utf8')
+    : null;
+  const server = app.getHttpAdapter().getInstance();
+  const notFound = (requestId: string) => ({
+    error: {
+      code: 'NOT_FOUND',
+      message: 'Resource not found',
+      requestId,
+    },
+  });
+  if (adminIndex) {
+    server.get('/admin', (_request, reply) => reply.redirect('/admin/'));
+    server.get('/admin/*', (request, reply) => {
+      if (request.headers.accept?.includes('text/html')) {
+        return reply.type('text/html; charset=utf-8').send(adminIndex);
+      }
+      return reply.status(404).send(notFound(request.id));
     });
+  }
+  if (webIndex) {
+    server.get('/*', (request, reply) => {
+      const pathname = (request.raw.url ?? '/').split('?')[0] ?? '/';
+      if (
+        request.headers.accept?.includes('text/html') &&
+        !pathname.startsWith('/api/') &&
+        !pathname.startsWith('/health/')
+      ) {
+        return reply.type('text/html; charset=utf-8').send(webIndex);
+      }
+      return reply.status(404).send(notFound(request.id));
+    });
+  }
+
+  server.addHook('onRequest', (request, reply, done) => {
+    reply.header('x-request-id', request.id || randomUUID());
+    done();
+  });
 
   if (config.get<boolean>('API_DOCS_ENABLED')) {
     const document = SwaggerModule.createDocument(

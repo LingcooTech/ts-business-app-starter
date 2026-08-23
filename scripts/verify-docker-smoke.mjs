@@ -78,6 +78,13 @@ try {
   compose(['up', '-d', 'api', 'worker', 'caddy']);
   await waitForReady(`http://127.0.0.1:${hostPort}/health/ready`);
   execFileSync('curl', ['-fsS', `http://127.0.0.1:${hostPort}/health/live`], { stdio: 'inherit' });
+  for (const route of ['/', '/account', '/admin/', '/admin/login', '/admin/access']) {
+    execFileSync(
+      'curl',
+      ['-fsS', '-H', 'Accept: text/html', `http://127.0.0.1:${hostPort}${route}`],
+      { stdio: 'ignore' },
+    );
+  }
   execFileSync(
     process.execPath,
     ['scripts/verify-auth-smoke.mjs', `http://127.0.0.1:${hostPort}`, ownerEmail, ownerPassword],

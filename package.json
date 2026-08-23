@@ -9,11 +9,11 @@
     "node": ">=24.0.0 <25"
   },
   "scripts": {
-    "dev": "corepack pnpm --filter @ts-business-app-starter/contracts build && corepack pnpm --parallel --filter @ts-business-app-starter/server --filter @ts-business-app-starter/admin --filter @ts-business-app-starter/web dev",
+    "dev": "corepack pnpm --filter @ts-business-app-starter/contracts build && corepack pnpm --filter @ts-business-app-starter/api-client build && corepack pnpm --parallel --filter @ts-business-app-starter/server --filter @ts-business-app-starter/admin --filter @ts-business-app-starter/web dev",
     "dev:server": "corepack pnpm --filter @ts-business-app-starter/contracts build && corepack pnpm --filter @ts-business-app-starter/server dev",
     "dev:worker": "corepack pnpm --filter @ts-business-app-starter/server dev:worker",
-    "dev:admin": "corepack pnpm --filter @ts-business-app-starter/admin dev",
-    "dev:web": "corepack pnpm --filter @ts-business-app-starter/web dev",
+    "dev:admin": "corepack pnpm --filter @ts-business-app-starter/contracts build && corepack pnpm --filter @ts-business-app-starter/api-client build && corepack pnpm --filter @ts-business-app-starter/admin dev",
+    "dev:web": "corepack pnpm --filter @ts-business-app-starter/contracts build && corepack pnpm --filter @ts-business-app-starter/api-client build && corepack pnpm --filter @ts-business-app-starter/web dev",
     "build": "corepack pnpm -r --if-present run build",
     "typecheck": "corepack pnpm -r --if-present run typecheck",
     "test": "corepack pnpm -r --if-present run test",

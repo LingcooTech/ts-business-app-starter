@@ -7,10 +7,11 @@ Language: [中文](README.md) · English
 Starter versions identify the creation baseline only. After creation, each application evolves independently; see the [upgrade guide](docs/upgrading.md) when you want to adopt later foundation changes.
 
 See [Identity and Access Control](docs/identity-access.md) for sessions, CSRF, permissions, and Owner bootstrap.
+See [前端应用基础](docs/frontend-foundation.md) for frontend workspace, routing, session, and extension boundaries.
 
-> Current status: phase 2. The independent baseline, Contracts, database conventions, Identity,
-> and Access Control are delivered. Settings, audit, jobs, integrations, and frontend foundations
-> remain incremental work.
+> Current status: phase 3. The independent baseline, Contracts, Identity, Access Control, shared
+> UI, API Client, Admin, and Web application shells are delivered. Settings, audit, jobs, and
+> external providers remain incremental work.
 
 ## 1. Positioning
 
@@ -53,7 +54,8 @@ TS Business App Starter focuses on selection, composition, conventions, and engi
 | Database             | PostgreSQL        | Stores core business data                                 |
 | Data access          | Drizzle ORM       | Manages database access and schemas with TypeScript       |
 | Validation           | Zod / JSON Schema | Validates configuration and API data                      |
-| Frontend             | React + Vite      | Provides empty administration and web entry points        |
+| Frontend             | React + Vite      | Builds the administration and public web applications     |
+| Server state         | TanStack Query    | Manages remote state, caching, and mutations              |
 | Workspace            | pnpm              | Manages dependencies and the multi-project workspace      |
 | Delivery             | Docker            | Builds reproducible runtime images                        |
 | CI/CD                | GitHub Actions    | Automates checks, tests, builds, and publishing           |
@@ -109,7 +111,7 @@ In a measurement of the blank starter on a server with 2 CPU cores and 3.6 GB RA
         ├── Docker / Docker Compose
         └── GitHub Actions
 
-Admin and Web are the two default empty frontend entry points. A mini program, mobile app, or another terminal can also consume the API. The API handles real-time requests, while the Worker provides only a generic standalone process entry point.
+Admin and Web provide routing, session restoration, error boundaries, shared UI, and real account flows. A mini program, mobile app, or another terminal can also consume the API. The API handles real-time requests, while the Worker provides only a generic standalone process entry point.
 
 ## 6. Repository structure
 
@@ -129,7 +131,11 @@ The recommended boundary is one business application per Git repository. Each ap
     │   └── test/
     ├── admin/                   # React + Vite administration console
     ├── web/                     # React + Vite public web application
-    ├── packages/contracts/      # Private contracts shared by server and future clients
+    ├── packages/
+    │   ├── contracts/           # Contracts shared by server and clients
+    │   ├── api-client/          # Response validation, session, CSRF, React Query
+    │   ├── design-tokens/       # Visual tokens shared by Admin and Web
+    │   └── ui/                  # Business-neutral React interaction primitives
     ├── docker/                  # Caddy / Docker configuration
     ├── deploy/                  # Deployment scripts and environment templates
     ├── .github/workflows/       # CI / Build / Publish / Deploy
@@ -141,7 +147,8 @@ The recommended boundary is one business application per Git repository. Each ap
 
 Add new business capabilities as NestJS Modules in server first instead of extracting them into
 independent packages prematurely. `packages/` is a private application workspace, not the home of
-published `@lingcoo-tech/*` packages; Contracts is the only package currently included.
+published `@lingcoo-tech/*` packages. Contracts, API Client, Design Tokens, and UI are included;
+page routing and resource-page patterns remain inside Admin and Web.
 
 ## 7. How to build a new application with it
 

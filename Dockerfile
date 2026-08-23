@@ -15,6 +15,9 @@ COPY server/package.json ./server/package.json
 COPY admin/package.json ./admin/package.json
 COPY web/package.json ./web/package.json
 COPY packages/contracts/package.json ./packages/contracts/package.json
+COPY packages/api-client/package.json ./packages/api-client/package.json
+COPY packages/design-tokens/package.json ./packages/design-tokens/package.json
+COPY packages/ui/package.json ./packages/ui/package.json
 RUN pnpm install --frozen-lockfile
 
 FROM dependencies AS build

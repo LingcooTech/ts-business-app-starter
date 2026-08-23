@@ -1,29 +1,32 @@
-import { useEffect, useState } from 'react';
+import { Route, Routes } from 'react-router-dom';
 
-type ApiState = 'checking' | 'ready' | 'unavailable';
+import { AdminLayout } from './app/admin-layout';
+import { RequirePermission, RequireSession } from './app/guards';
+import { NotFoundPage } from './app/not-found-page';
+import { AccessPage } from './features/access/page';
+import { AccountPage } from './features/account/page';
+import { ForgotPasswordPage, LoginPage } from './features/auth/pages';
+import { DashboardPage } from './features/dashboard/page';
+import { FoundationPage } from './features/foundation/page';
+import { UiPage } from './features/ui-showcase/page';
 
 export function App() {
-  const [apiState, setApiState] = useState<ApiState>('checking');
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void fetch('/health/ready', { signal: controller.signal })
-      .then((response) => setApiState(response.ok ? 'ready' : 'unavailable'))
-      .catch(() => setApiState('unavailable'));
-    return () => controller.abort();
-  }, []);
-
   return (
-    <main className="shell">
-      <section className="panel">
-        <span className="eyebrow">APPLICATION ADMIN</span>
-        <h1>管理后台底座已就绪</h1>
-        <p>当前仅包含空白运行架构。身份、权限和业务模块将在后续阶段按垂直切片迁移。</p>
-        <div className={`status status--${apiState}`}>
-          <span className="status__dot" aria-hidden="true" />
-          API {apiState === 'checking' ? '检查中' : apiState === 'ready' ? '已就绪' : '不可用'}
-        </div>
-      </section>
-    </main>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route element={<RequireSession />}>
+        <Route element={<AdminLayout />}>
+          <Route index element={<DashboardPage />} />
+          <Route element={<RequirePermission permission="roles.read" />}>
+            <Route path="access" element={<AccessPage />} />
+          </Route>
+          <Route path="foundation" element={<FoundationPage />} />
+          <Route path="ui" element={<UiPage />} />
+          <Route path="account" element={<AccountPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+      </Route>
+    </Routes>
   );
 }
