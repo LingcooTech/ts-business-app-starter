@@ -18,7 +18,7 @@
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "db:migrate": "tsx src/migrate.ts",
-    "db:bootstrap": "tsx src/bootstrap.ts",
+    "db:bootstrap": "nest build && node dist/bootstrap.js",
     "db:studio": "drizzle-kit studio --config drizzle.config.ts"
   },
   "dependencies": {
