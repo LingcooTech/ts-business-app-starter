@@ -10,6 +10,7 @@ on:
       - 'server/**'
       - 'admin/**'
       - 'web/**'
+      - 'packages/**'
       - 'scripts/**'
       - 'create-ts-business-app-starter/**'
       - 'package.json'

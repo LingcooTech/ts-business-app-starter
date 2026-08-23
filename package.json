@@ -20,6 +20,7 @@
     "check:starter-version": "node scripts/check-starter-version.mjs",
     "check:toolchain": "node scripts/check-toolchain.mjs",
     "smoke:generated": "node scripts/verify-generated-project.mjs",
+    "smoke:module-generator": "node scripts/verify-module-generator.mjs",
     "smoke:docker": "node scripts/verify-docker-smoke.mjs",
     "generate:module": "node scripts/generate-module.mjs",
     "check:boundaries": "node scripts/check-module-boundaries.mjs",

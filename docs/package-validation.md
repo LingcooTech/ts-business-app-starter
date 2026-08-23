@@ -5,24 +5,36 @@
 Starter 的验证项目不是用来完整迁移 Edu 或 Retail 业务，而是验证：
 
 1. `ts-business-app-starter` 能否通过 npx 生成独立应用；
-2. 独立应用能否消费已发布的 `@lingcoo-tech/*` package；
-3. 多个真实项目是否暴露出稳定、值得公共化的重复能力。
+2. 生成应用能否在离线复用 CI 已安装依赖的前提下完成冻结锁文件安装和 `pnpm check`；
+3. 独立应用能否消费已发布的 `@lingcoo-tech/*` package；
+4. 多个真实项目是否暴露出稳定、值得公共化的重复能力。
 
-## Edu 与 Retail 验证结果
+## 当前 Business Starter 验证结果
 
-| 验证项                   | Edu                                 | Retail                                    |
-| ------------------------ | ----------------------------------- | ----------------------------------------- |
-| Starter CLI 生成         | 通过                                | 通过                                      |
-| 独立 Git 仓库            | 通过                                | 通过                                      |
-| npm package 安装         | 通过                                | 通过                                      |
-| `@lingcoo-tech/security` | 真实登录、密码哈希、JWT、`/auth/me` | 密码哈希、JWT、Bearer Token contract 测试 |
-| `@lingcoo-tech/http`     | Nest 错误 filter 和校验错误响应     | HTTP 错误响应 contract 测试               |
-| `@lingcoo-tech/crypto`   | package 集成验证                    | 配置加解密 contract 测试                  |
-| `@lingcoo-tech/mailer`   | 可安装和消费                        | SMTP factory contract 测试                |
-| PostgreSQL migration     | 账户认证表真实 migration            | Starter 数据库基线待按需验证              |
-| 完整工程检查             | 通过                                | 通过                                      |
+| 验证项                         | 结果 |
+| ------------------------------ | ---- |
+| Business CLI 本地模板生成      | 通过 |
+| 模板身份和维护者文件清理       | 通过 |
+| workspace 依赖和构建产物未复制 | 通过 |
+| 冻结锁文件离线安装             | 通过 |
+| 生成项目 Format/Lint/Typecheck | 通过 |
+| 生成项目测试和构建             | 通过 |
+| 模块生成器与边界检查           | 通过 |
+| PostgreSQL/Docker 生产 Smoke   | 通过 |
 
-Edu 已经完成一条真实 API 纵向验证链路，Retail 则以更小的 contract 验证证明同一组 npm package 可以被第二个独立应用消费。两者共同证明 Starter 与独立公共 package 仓库的组合模式成立。
+Edu、Retail 和 Core 的历史实现只用于证明需求重复和公共包边界，不视为已经由 Business Starter 生成或迁移完成。
+
+## 内部 Contracts workspace
+
+`packages/contracts` 是 Business Starter 仓库内部的私有 workspace，目前提供：
+
+- API Error Envelope；
+- Page/PageSize 分页与元数据；
+- 模块自定义排序字段；
+- UUID 和带时区 ISO 8601 时间；
+- 5 个契约测试和独立类型检查、构建。
+
+它不属于 `ts-app-packages`，也不独立发布。
 
 ## 当前四个 package 的结论
 
@@ -57,4 +69,4 @@ Edu 已经完成一条真实 API 纵向验证链路，Retail 则以更小的 con
 - 可以在独立 package 中测试和版本化；
 - 被第二个应用实际消费后仍然没有明显定制分支。
 
-当前阶段的下一步是继续用 Edu 和 Retail 做回归验证、完善四个 package 的文档和版本发布流程，而不是继续迁移业务模块或扩充 package 数量。
+当前阶段不新增跨仓库公共 package。下一阶段在 Business Starter 内实现 Identity 与 Access Control，并按真实使用情况消费现有安全基础包。

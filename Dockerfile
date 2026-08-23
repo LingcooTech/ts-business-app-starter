@@ -14,6 +14,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY server/package.json ./server/package.json
 COPY admin/package.json ./admin/package.json
 COPY web/package.json ./web/package.json
+COPY packages/contracts/package.json ./packages/contracts/package.json
 RUN pnpm install --frozen-lockfile
 
 FROM dependencies AS build

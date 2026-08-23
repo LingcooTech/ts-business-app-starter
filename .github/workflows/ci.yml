@@ -54,6 +54,7 @@ jobs:
       - name: Verify migration idempotency
         run: pnpm db:migrate
       - run: corepack pnpm smoke:generated
+      - run: corepack pnpm smoke:module-generator
       - run: corepack pnpm check:boundaries
       - run: pnpm check
       - run: corepack pnpm audit --prod --audit-level high

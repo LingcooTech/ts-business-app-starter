@@ -1,0 +1,66 @@
+import { z } from 'zod';
+import { describe, expect, it } from 'vitest';
+
+import {
+  apiErrorResponseSchema,
+  createPaginatedResponseSchema,
+  createSortQuerySchema,
+  isoDateTimeSchema,
+  paginationMeta,
+  paginationQuerySchema,
+} from './index.js';
+
+describe('shared API contracts', () => {
+  it('normalizes pagination query parameters from HTTP strings', () => {
+    expect(paginationQuerySchema.parse({ page: '2', pageSize: '50', search: '  demo  ' })).toEqual({
+      page: 2,
+      pageSize: 50,
+      search: 'demo',
+    });
+    expect(paginationQuerySchema.parse({})).toEqual({ page: 1, pageSize: 20 });
+    expect(() => paginationQuerySchema.parse({ pageSize: 101 })).toThrow();
+  });
+
+  it('builds stable pagination metadata, including the empty case', () => {
+    expect(paginationMeta({ page: 1, pageSize: 20, total: 0 })).toEqual({
+      page: 1,
+      pageSize: 20,
+      total: 0,
+      totalPages: 0,
+    });
+    expect(paginationMeta({ page: 2, pageSize: 20, total: 41 }).totalPages).toBe(3);
+  });
+
+  it('validates module-specific sort fields', () => {
+    const schema = createSortQuerySchema(['createdAt', 'name'] as const);
+    expect(schema.parse({ sortBy: 'name' })).toEqual({ sortBy: 'name', sortDirection: 'asc' });
+    expect(() => schema.parse({ sortBy: 'unknown' })).toThrow();
+  });
+
+  it('validates error and paginated response envelopes', () => {
+    expect(
+      apiErrorResponseSchema.parse({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Resource not found',
+          requestId: 'req-1',
+        },
+      }),
+    ).toEqual({
+      error: { code: 'NOT_FOUND', message: 'Resource not found', requestId: 'req-1' },
+    });
+
+    const responseSchema = createPaginatedResponseSchema(z.object({ id: z.uuid() }));
+    expect(
+      responseSchema.parse({
+        items: [{ id: 'fdda765f-fc57-5604-a269-52a7df8164ec' }],
+        meta: { page: 1, pageSize: 20, total: 1, totalPages: 1 },
+      }).items,
+    ).toHaveLength(1);
+  });
+
+  it('requires timezone-aware ISO date-time values', () => {
+    expect(isoDateTimeSchema.parse('2026-08-23T15:30:00+08:00')).toBe('2026-08-23T15:30:00+08:00');
+    expect(() => isoDateTimeSchema.parse('2026-08-23T15:30:00')).toThrow();
+  });
+});
