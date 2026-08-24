@@ -150,6 +150,8 @@ async function resolveTemplate(workdir, options) {
 async function copyTemplate(source, target) {
   await mkdir(target, { recursive: true });
   const excludedEntries = new Set([
+    '.DS_Store',
+    '.env',
     '.git',
     '.next',
     'node_modules',

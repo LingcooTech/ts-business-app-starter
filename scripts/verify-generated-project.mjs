@@ -84,6 +84,10 @@ try {
   async function scan(directory) {
     for (const entry of await readdir(directory, { withFileTypes: true })) {
       if (entry.name === '.git') continue;
+      if (entry.name === '.env' || entry.name === '.DS_Store') {
+        failures.push(`${join(directory, entry.name)}: generated project contains local state`);
+        continue;
+      }
       if (entry.isDirectory() && forbiddenDirectories.has(entry.name)) {
         failures.push(`${join(directory, entry.name)}: generated project contains build artifact`);
         continue;
@@ -106,7 +110,7 @@ try {
   }
   await scan(project);
   if (failures.length > 0)
-    throw new Error(`generated project contains starter markers:\n${failures.join('\n')}`);
+    throw new Error(`generated project validation failed:\n${failures.join('\n')}`);
 
   execFileSync('corepack', ['pnpm', 'install', '--prefer-offline', '--frozen-lockfile'], {
     cwd: project,
