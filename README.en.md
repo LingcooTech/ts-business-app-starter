@@ -6,12 +6,16 @@ Language: [中文](README.md) · English
 
 Starter versions identify the creation baseline only. After creation, each application evolves independently; see the [upgrade guide](docs/upgrading.md) when you want to adopt later foundation changes.
 
+See [Implementation status and handoff](docs/implementation-status.md) for verified stage conclusions,
+acceptance evidence, and the resume protocol after an interrupted development session.
+
 See [Identity and Access Control](docs/identity-access.md) for sessions, CSRF, permissions, and Owner bootstrap.
 See [前端应用基础](docs/frontend-foundation.md) for frontend workspace, routing, session, and extension boundaries.
+See [Settings and Audit](docs/settings-audit.md) for encryption, key rotation, and immutable audit events.
 
-> Current status: phase 3. The independent baseline, Contracts, Identity, Access Control, shared
-> UI, API Client, Admin, and Web application shells are delivered. Settings, audit, jobs, and
-> external providers remain incremental work.
+> Current status: phase 4. The independent baseline, Contracts, Identity, Access Control, shared
+> UI, API Client, Admin/Web application shells, Settings, and Audit are delivered. Jobs and external
+> providers remain incremental work.
 
 ## 1. Positioning
 

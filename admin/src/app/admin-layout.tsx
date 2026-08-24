@@ -5,6 +5,8 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 const navigation = [
   { to: '/', label: '工作台', mark: '⌂' },
   { to: '/access', label: '权限中心', mark: '◇', permission: 'roles.read' },
+  { to: '/settings', label: '系统设置', mark: '⚙', permission: 'settings.read' },
+  { to: '/audit', label: '审计日志', mark: '≡', permission: 'audit.read' },
   { to: '/foundation', label: '基础能力', mark: '▦' },
   { to: '/ui', label: 'UI 组件', mark: '◫' },
 ];

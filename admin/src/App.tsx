@@ -4,10 +4,12 @@ import { AdminLayout } from './app/admin-layout';
 import { RequirePermission, RequireSession } from './app/guards';
 import { NotFoundPage } from './app/not-found-page';
 import { AccessPage } from './features/access/page';
+import { AuditPage } from './features/audit/page';
 import { AccountPage } from './features/account/page';
 import { ForgotPasswordPage, LoginPage } from './features/auth/pages';
 import { DashboardPage } from './features/dashboard/page';
 import { FoundationPage } from './features/foundation/page';
+import { SettingsPage } from './features/settings/page';
 import { UiPage } from './features/ui-showcase/page';
 
 export function App() {
@@ -20,6 +22,12 @@ export function App() {
           <Route index element={<DashboardPage />} />
           <Route element={<RequirePermission permission="roles.read" />}>
             <Route path="access" element={<AccessPage />} />
+          </Route>
+          <Route element={<RequirePermission permission="settings.read" />}>
+            <Route path="settings" element={<SettingsPage />} />
+          </Route>
+          <Route element={<RequirePermission permission="audit.read" />}>
+            <Route path="audit" element={<AuditPage />} />
           </Route>
           <Route path="foundation" element={<FoundationPage />} />
           <Route path="ui" element={<UiPage />} />

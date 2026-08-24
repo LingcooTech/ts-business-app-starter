@@ -1,5 +1,8 @@
 # TS Business App Starter 实施计划
 
+当前实施结论、已验证边界和中断恢复步骤见
+[`implementation-status.md`](./implementation-status.md)。后续开发应先读取该文档，不重复评估已完成阶段。
+
 ## 1. 基线
 
 本仓库由 `ts-app-starter@235cfdbe4262cff73b21d4e1a602ccc8fd252cbb` 一次性派生，是独立、自包含的完整仓库。
@@ -56,6 +59,8 @@ npx @lingcoo-tech/create-ts-business-app-starter@latest my-business-app
 - 生产静态托管与 Admin/Web SPA 深层路由。
 
 ### 阶段 4：设置与审计
+
+状态：已完成。
 
 - SettingsModule；
 - 数据库覆盖与环境变量兜底；

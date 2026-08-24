@@ -7,6 +7,7 @@ import { AppConfigModule } from './infrastructure/config/app-config.module';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { HealthModule } from './infrastructure/health/health.module';
 import { AccessControlModule } from './modules/access-control/public';
+import { SettingsModule } from './modules/settings/public';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AccessControlModule } from './modules/access-control/public';
     DatabaseModule,
     HealthModule,
     AccessControlModule,
+    SettingsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: FastifyThrottlerGuard }],
 })

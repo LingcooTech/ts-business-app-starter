@@ -1,5 +1,26 @@
 import { z } from 'zod';
 
+const DEVELOPMENT_SETTINGS_KEY = 'development-only-settings-key-change-me';
+
+const settingsKeyringSchema = z
+  .string()
+  .default(JSON.stringify({ development: DEVELOPMENT_SETTINGS_KEY }))
+  .transform((value, context): unknown => {
+    try {
+      return JSON.parse(value);
+    } catch {
+      context.addIssue({ code: 'custom', message: 'must be a JSON object of key IDs to secrets' });
+      return z.NEVER;
+    }
+  })
+  .pipe(z.record(z.string().trim().min(1).max(120), z.string().min(32)));
+
+const optionalEnvironmentValue = <T extends z.ZodType>(schema: T) =>
+  z
+    .union([z.literal(''), schema])
+    .optional()
+    .transform((value): z.output<T> | undefined => (value === '' ? undefined : value));
+
 export const environmentSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -32,6 +53,17 @@ export const environmentSchema = z
       .enum(['true', 'false'])
       .default('false')
       .transform((value) => value === 'true'),
+    SETTINGS_ENCRYPTION_CURRENT_KEY_ID: z
+      .string()
+      .trim()
+      .regex(/^[A-Za-z0-9._-]+$/)
+      .max(120)
+      .default('development'),
+    SETTINGS_ENCRYPTION_KEYS: settingsKeyringSchema,
+    SUPPORT_EMAIL: optionalEnvironmentValue(
+      z.string().trim().toLowerCase().pipe(z.email().max(320)),
+    ),
+    SMTP_PASSWORD: optionalEnvironmentValue(z.string().min(1).max(1000)),
     BOOTSTRAP_OWNER_EMAIL: z.string().trim().optional(),
     BOOTSTRAP_OWNER_PASSWORD: z.string().optional(),
   })
@@ -62,6 +94,23 @@ export const environmentSchema = z
         code: 'custom',
         path: ['BOOTSTRAP_OWNER_EMAIL'],
         message: 'email and password must be provided together',
+      });
+    }
+    if (!value.SETTINGS_ENCRYPTION_KEYS[value.SETTINGS_ENCRYPTION_CURRENT_KEY_ID]) {
+      context.addIssue({
+        code: 'custom',
+        path: ['SETTINGS_ENCRYPTION_CURRENT_KEY_ID'],
+        message: 'must identify a key in SETTINGS_ENCRYPTION_KEYS',
+      });
+    }
+    if (
+      value.NODE_ENV === 'production' &&
+      Object.values(value.SETTINGS_ENCRYPTION_KEYS).includes(DEVELOPMENT_SETTINGS_KEY)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['SETTINGS_ENCRYPTION_KEYS'],
+        message: 'must not contain the development key in production',
       });
     }
   });

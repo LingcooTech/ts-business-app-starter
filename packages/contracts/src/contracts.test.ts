@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   apiErrorResponseSchema,
+  auditListResponseSchema,
   sessionIdentitySchema,
   createPaginatedResponseSchema,
   createSortQuerySchema,
@@ -10,6 +11,7 @@ import {
   paginationMeta,
   paginationQuerySchema,
   permissionKeySchema,
+  settingViewSchema,
 } from './index.js';
 
 describe('shared API contracts', () => {
@@ -102,5 +104,47 @@ describe('shared API contracts', () => {
   it('accepts namespaced permission keys and rejects role names', () => {
     expect(permissionKeySchema.parse('accounts.read')).toBe('accounts.read');
     expect(() => permissionKeySchema.parse('admin')).toThrow();
+  });
+
+  it('keeps sensitive setting views masked and validates audit pagination', () => {
+    expect(
+      settingViewSchema.parse({
+        key: 'integrations.smtp-password',
+        group: 'integrations',
+        label: 'SMTP password',
+        description: 'Encrypted credential',
+        sensitive: true,
+        testable: false,
+        source: 'database',
+        configured: true,
+        maskedValue: '••••••••',
+        version: 2,
+        updatedAt: '2026-08-24T10:00:00Z',
+        updatedBy: 'fdda765f-fc57-5604-a269-52a7df8164ec',
+      }).maskedValue,
+    ).toBe('••••••••');
+    expect(() =>
+      settingViewSchema.parse({
+        key: 'integrations.smtp-password',
+        group: 'integrations',
+        label: 'SMTP password',
+        description: 'Encrypted credential',
+        sensitive: true,
+        testable: false,
+        source: 'database',
+        configured: true,
+        value: 'must-never-be-accepted',
+        version: 2,
+        updatedAt: '2026-08-24T10:00:00Z',
+        updatedBy: 'fdda765f-fc57-5604-a269-52a7df8164ec',
+      }),
+    ).toThrow();
+
+    expect(
+      auditListResponseSchema.parse({
+        items: [],
+        meta: { page: 1, pageSize: 20, total: 0, totalPages: 0 },
+      }).items,
+    ).toEqual([]);
   });
 });

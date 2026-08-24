@@ -2,6 +2,15 @@
 
 Starter 遵循语义化版本。`.starter-version`、根 `package.json` 的版本以及 CLI 的 `templateVersion` 必须保持一致；CLI 自身的 patch 修复可以独立发布。
 
+## [Unreleased]
+
+### Added
+
+- SettingsModule：设置注册、环境变量兜底、数据库覆盖、AES-256-GCM 敏感值加密与密钥轮换。
+- AuditModule：用户、系统和任务 Actor，筛选分页、Metadata 脱敏及数据库级不可变保护。
+- Settings 与 Audit 的 Contracts、API Client hooks 和 Admin 基础页面。
+- Docker smoke 对密文落库、API 脱敏、配置修改审计和审计不可篡改的端到端验证。
+
 ## [0.1.0] - 2026-08-18
 
 ### Added

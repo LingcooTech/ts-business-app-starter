@@ -74,6 +74,7 @@ Business Starter 当前提供四个只随应用源码演进的私有 workspace�
 - 服务端使用 `@lingcoo-tech/http` 的 `ApiError`、异常转换和响应构造；
 - Contracts 组合 `@lingcoo-tech/http` 的响应守卫，并额外强制 Business API 的 request ID；
 - API Client 通过继承公共 `ApiError` 只补充客户端 request ID，不重复定义状态码、错误码和详情；
+- Settings 使用 `@lingcoo-tech/crypto` 的版本化 AES-256-GCM 信封，不复制加解密原语；
 - Nest/Fastify 异常适配、Cookie 会话和权限编排继续保留在 Business Starter。
 
-`@lingcoo-tech/crypto` 和 `@lingcoo-tech/mailer` 等到 Settings、Mail 模块实际落地时接入，不提前增加空依赖。
+`@lingcoo-tech/mailer` 等到 Mail 模块实际落地时接入，不提前增加空依赖。

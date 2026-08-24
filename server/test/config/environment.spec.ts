@@ -47,4 +47,37 @@ describe('identity environment configuration', () => {
       }).AUTH_COOKIE_SAME_SITE,
     ).toBe('none');
   });
+
+  it('requires the selected settings key and rejects the development key in production', () => {
+    expect(() =>
+      validateEnvironment({
+        ...base,
+        SETTINGS_ENCRYPTION_CURRENT_KEY_ID: 'missing',
+        SETTINGS_ENCRYPTION_KEYS: JSON.stringify({ current: 'a'.repeat(32) }),
+      }),
+    ).toThrow('SETTINGS_ENCRYPTION_CURRENT_KEY_ID');
+    expect(() =>
+      validateEnvironment({
+        ...base,
+        NODE_ENV: 'production',
+        AUTH_COOKIE_SECURE: 'true',
+      }),
+    ).toThrow('SETTINGS_ENCRYPTION_KEYS');
+  });
+
+  it('parses a versioned settings keyring', () => {
+    expect(
+      validateEnvironment({
+        ...base,
+        SETTINGS_ENCRYPTION_CURRENT_KEY_ID: 'v2',
+        SETTINGS_ENCRYPTION_KEYS: JSON.stringify({ v1: 'a'.repeat(32), v2: 'b'.repeat(32) }),
+      }).SETTINGS_ENCRYPTION_KEYS,
+    ).toEqual({ v1: 'a'.repeat(32), v2: 'b'.repeat(32) });
+  });
+
+  it('normalizes empty optional setting fallbacks from Docker Compose', () => {
+    const environment = validateEnvironment({ ...base, SUPPORT_EMAIL: '', SMTP_PASSWORD: '' });
+    expect(environment.SUPPORT_EMAIL).toBeUndefined();
+    expect(environment.SMTP_PASSWORD).toBeUndefined();
+  });
 });

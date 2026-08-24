@@ -63,8 +63,8 @@ Business Starter 提供或计划提供以下非行业化模块：
 
 - identity（已交付）；
 - access-control（已交付）；
-- settings；
-- audit；
+- settings（已交付）；
+- audit（已交付）；
 - jobs 与 transactional outbox；
 - notifications；
 - mail；
@@ -77,6 +77,10 @@ Identity 使用 HttpOnly Cookie 与可撤销的 PostgreSQL 服务端会话；数
 一次性操作令牌的 SHA-256 摘要。Access Control 使用默认拒绝的全局 Guard，写请求还需
 验证与会话绑定的 CSRF Token。角色与账户、认证相互独立，Starter 只同步通用权限和系统
 Owner，不预置行业角色。
+
+Settings 通过注册表限制可管理的配置键，采用数据库覆盖、环境变量兜底，并使用
+`@lingcoo-tech/crypto` 保存带 Key ID 的 AES-256-GCM 密文。Audit 是显式业务事件而非访问日志；
+设置变更与审计事件在同一事务提交，数据库触发器禁止修改或删除既有审计记录。
 
 ## Runtime topology
 

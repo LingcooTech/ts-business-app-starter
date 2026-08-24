@@ -7,11 +7,13 @@
 Starter 的版本只代表创建基线。应用创建后独立维护；需要吸收后续基础设施改进时，请参阅[升级指南](docs/upgrading.md)。
 
 Starter 的长期定位和验收标准见[质量标准](docs/quality-bar.md)。
+当前阶段结论、验收证据和后续恢复步骤见[实施状态与交接](docs/implementation-status.md)。
 身份、会话、CSRF、权限与 Owner 初始化见[Identity 与 Access Control](docs/identity-access.md)。
 前端 workspace、路由、会话和扩展约定见[前端应用基础](docs/frontend-foundation.md)。
+设置加密、密钥轮换和不可变审计见[Settings 与 Audit](docs/settings-audit.md)。
 
-> 当前状态：阶段 3。独立仓库基线、Contracts、Identity、Access Control、共享 UI、
-> API Client、Admin 与 Web 应用壳已完成；设置、审计、任务和外部服务按实施计划逐项交付。
+> 当前状态：阶段 4。独立仓库基线、Contracts、Identity、Access Control、共享 UI、
+> API Client、Admin/Web 应用壳、Settings 与 Audit 已完成；任务和外部服务按实施计划逐项交付。
 
 ## 1. 项目定位
 

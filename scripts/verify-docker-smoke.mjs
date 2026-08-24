@@ -22,6 +22,8 @@ const env = [
   'API_DOCS_ENABLED=false',
   'AUTH_COOKIE_SECURE=true',
   'AUTH_EXPOSE_TEST_TOKENS=false',
+  'SETTINGS_ENCRYPTION_CURRENT_KEY_ID=smoke-v1',
+  'SETTINGS_ENCRYPTION_KEYS={"smoke-v1":"smoke-settings-encryption-key-123456789"}',
   `BOOTSTRAP_OWNER_EMAIL=${ownerEmail}`,
   `BOOTSTRAP_OWNER_PASSWORD=${ownerPassword}`,
   'POSTGRES_DB=app',
@@ -52,6 +54,14 @@ function compose(args) {
   );
 }
 
+function composeCapture(args) {
+  return execFileSync(
+    'docker',
+    ['compose', '-p', project, '-f', 'docker-compose.prod.yml', '--env-file', envFile, ...args],
+    { cwd: root, encoding: 'utf8' },
+  ).trim();
+}
+
 async function waitForReady(url, attempts = 30) {
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
@@ -78,7 +88,15 @@ try {
   compose(['up', '-d', 'api', 'worker', 'caddy']);
   await waitForReady(`http://127.0.0.1:${hostPort}/health/ready`);
   execFileSync('curl', ['-fsS', `http://127.0.0.1:${hostPort}/health/live`], { stdio: 'inherit' });
-  for (const route of ['/', '/account', '/admin/', '/admin/login', '/admin/access']) {
+  for (const route of [
+    '/',
+    '/account',
+    '/admin/',
+    '/admin/login',
+    '/admin/access',
+    '/admin/settings',
+    '/admin/audit',
+  ]) {
     execFileSync(
       'curl',
       ['-fsS', '-H', 'Accept: text/html', `http://127.0.0.1:${hostPort}${route}`],
@@ -90,6 +108,40 @@ try {
     ['scripts/verify-auth-smoke.mjs', `http://127.0.0.1:${hostPort}`, ownerEmail, ownerPassword],
     { cwd: root, stdio: 'inherit' },
   );
+  const secretStorage = composeCapture([
+    'exec',
+    '-T',
+    'postgres',
+    'psql',
+    '-U',
+    'app',
+    '-d',
+    'app',
+    '-tAc',
+    "select count(*) from system_settings where key = 'integrations.smtp-password' and value_json is null and encrypted_value is not null and key_id = 'smoke-v1' and encrypted_value::text not like '%docker-smoke-plaintext-secret%'",
+  ]);
+  if (secretStorage !== '1') throw new Error('sensitive setting was not stored as ciphertext');
+
+  let immutable = false;
+  try {
+    composeCapture([
+      'exec',
+      '-T',
+      'postgres',
+      'psql',
+      '-v',
+      'ON_ERROR_STOP=1',
+      '-U',
+      'app',
+      '-d',
+      'app',
+      '-c',
+      "update audit_logs set action = 'tampered' where action = 'settings.updated'",
+    ]);
+  } catch {
+    immutable = true;
+  }
+  if (!immutable) throw new Error('audit log database immutability guard did not reject an update');
   console.log('Docker production smoke test passed');
 } finally {
   try {

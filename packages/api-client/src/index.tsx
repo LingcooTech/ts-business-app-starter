@@ -8,13 +8,26 @@ import {
 } from '@tanstack/react-query';
 import {
   acceptedActionSchema,
+  auditListResponseSchema,
+  auditQuerySchema,
   apiErrorResponseSchema,
   currentPermissionsSchema,
+  rotateSettingsResponseSchema,
+  settingTestResponseSchema,
+  settingViewSchema,
+  settingsListResponseSchema,
   sessionIdentitySchema,
+  type AuditQuery,
+  type AuditLog,
+  type ClearSettingRequest,
   type ChangePasswordRequest,
   type ConfirmPasswordReset,
   type CurrentPermissions,
   type LoginRequest,
+  type PaginationMeta,
+  type SaveSettingRequest,
+  type SettingTestResponse,
+  type SettingView,
   type SessionIdentity,
 } from '@ts-business-app-starter/contracts';
 import { ApiError } from '@lingcoo-tech/http';
@@ -24,6 +37,8 @@ import { z, type ZodType } from 'zod';
 const queryKeys = {
   session: ['identity', 'session'] as const,
   permissions: ['access', 'permissions'] as const,
+  settings: ['settings'] as const,
+  audit: (query: AuditQuery) => ['audit', query] as const,
 };
 
 export class ApiRequestError extends ApiError {
@@ -88,6 +103,50 @@ export class ApiClient {
 
   async getPermissions(): Promise<CurrentPermissions> {
     return this.request('/api/access/permissions', currentPermissionsSchema);
+  }
+
+  async listSettings(): Promise<SettingView[]> {
+    const response = await this.request('/api/settings', settingsListResponseSchema);
+    return response.items;
+  }
+
+  async saveSetting(key: string, input: SaveSettingRequest): Promise<SettingView> {
+    return this.request(`/api/settings/${encodeURIComponent(key)}`, settingViewSchema, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    });
+  }
+
+  async clearSetting(key: string, input: ClearSettingRequest = {}): Promise<SettingView> {
+    return this.request(`/api/settings/${encodeURIComponent(key)}`, settingViewSchema, {
+      method: 'DELETE',
+      body: JSON.stringify(input),
+    });
+  }
+
+  async testSetting(key: string): Promise<SettingTestResponse> {
+    return this.request(
+      `/api/settings/${encodeURIComponent(key)}/test`,
+      settingTestResponseSchema,
+      { method: 'POST' },
+    );
+  }
+
+  async rotateSettingSecrets(): Promise<{ rotated: number }> {
+    return this.request('/api/settings/actions/rotate-secrets', rotateSettingsResponseSchema, {
+      method: 'POST',
+    });
+  }
+
+  async listAuditLogs(
+    input: Partial<AuditQuery> = {},
+  ): Promise<{ items: AuditLog[]; meta: PaginationMeta }> {
+    const query = auditQuerySchema.parse(input);
+    const search = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined) search.set(key, String(value));
+    }
+    return this.request(`/api/audit?${search.toString()}`, auditListResponseSchema);
   }
 
   async changePassword(input: ChangePasswordRequest): Promise<void> {
@@ -193,6 +252,51 @@ export function usePermissions(enabled = true): UseQueryResult<CurrentPermission
     queryFn: () => api.getPermissions(),
     enabled,
   });
+}
+
+export function useSettings(): UseQueryResult<SettingView[]> {
+  const api = useApiClient();
+  return useQuery({ queryKey: queryKeys.settings, queryFn: () => api.listSettings() });
+}
+
+export function useSaveSetting() {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ key, input }: { key: string; input: SaveSettingRequest }) =>
+      api.saveSetting(key, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.settings }),
+  });
+}
+
+export function useClearSetting() {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ key, input = {} }: { key: string; input?: ClearSettingRequest }) =>
+      api.clearSetting(key, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.settings }),
+  });
+}
+
+export function useTestSetting() {
+  const api = useApiClient();
+  return useMutation({ mutationFn: (key: string) => api.testSetting(key) });
+}
+
+export function useRotateSettingSecrets() {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.rotateSettingSecrets(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.settings }),
+  });
+}
+
+export function useAuditLogs(input: Partial<AuditQuery> = {}) {
+  const api = useApiClient();
+  const query = auditQuerySchema.parse(input);
+  return useQuery({ queryKey: queryKeys.audit(query), queryFn: () => api.listAuditLogs(query) });
 }
 
 export function useLogin() {

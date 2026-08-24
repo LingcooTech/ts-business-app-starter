@@ -45,6 +45,47 @@ const permissions = await json(permissionsResponse);
 if (!permissions.permissions.includes('roles.manage'))
   throw new Error('Owner permissions are missing');
 
+const settingsResponse = await fetch(`${baseUrl}/api/settings`, {
+  headers: { cookie: cookieHeader },
+});
+const settings = await json(settingsResponse);
+const smtpPassword = settings.items.find((item) => item.key === 'integrations.smtp-password');
+if (!smtpPassword || smtpPassword.sensitive !== true || 'value' in smtpPassword) {
+  throw new Error('sensitive setting view is not safely masked');
+}
+
+const smokeSecret = 'docker-smoke-plaintext-secret';
+const saveSettingResponse = await fetch(`${baseUrl}/api/settings/integrations.smtp-password`, {
+  method: 'PUT',
+  headers: {
+    cookie: cookieHeader,
+    'content-type': 'application/json',
+    'x-csrf-token': identity.csrfToken,
+  },
+  body: JSON.stringify({ value: smokeSecret }),
+});
+const savedSetting = await json(saveSettingResponse);
+if (
+  savedSetting.source !== 'database' ||
+  savedSetting.maskedValue !== '••••••••' ||
+  JSON.stringify(savedSetting).includes(smokeSecret)
+) {
+  throw new Error('sensitive setting save exposed plaintext');
+}
+
+const auditResponse = await fetch(
+  `${baseUrl}/api/audit?action=settings.updated&resourceType=setting`,
+  { headers: { cookie: cookieHeader } },
+);
+const audit = await json(auditResponse);
+if (
+  audit.items.length !== 1 ||
+  audit.items[0].resourceId !== 'integrations.smtp-password' ||
+  !audit.items[0].requestId
+) {
+  throw new Error('setting modification audit event is missing');
+}
+
 const csrfRejected = await fetch(`${baseUrl}/api/auth/logout`, {
   method: 'POST',
   headers: { cookie: cookieHeader },
@@ -62,4 +103,4 @@ await json(logout);
 const revoked = await fetch(`${baseUrl}/api/auth/me`, { headers: { cookie: cookieHeader } });
 if (revoked.status !== 401) throw new Error(`revoked session returned ${revoked.status}`);
 
-console.log('identity and access-control smoke test passed');
+console.log('identity, access-control, settings, and audit smoke test passed');

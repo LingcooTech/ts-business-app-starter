@@ -158,6 +158,9 @@ importers:
       '@fastify/static':
         specifier: 10.1.3
         version: 10.1.3
+      '@lingcoo-tech/crypto':
+        specifier: 0.1.1
+        version: 0.1.1
       '@lingcoo-tech/http':
         specifier: 0.1.1
         version: 0.1.1
@@ -1453,6 +1456,12 @@ packages:
     resolution:
       {
         integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==,
+      }
+
+  '@lingcoo-tech/crypto@0.1.1':
+    resolution:
+      {
+        integrity: sha512-Mqg6YXTnK8tdAzqQtceaQIZCa0lBkCFuigliTspqeHd2pTkYHkRMDqFMPC3xQFwCKZrl6dxlWjfVZwxMmiSLjg==,
       }
 
   '@lingcoo-tech/http@0.1.1':
@@ -5371,6 +5380,8 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@lingcoo-tech/crypto@0.1.1': {}
 
   '@lingcoo-tech/http@0.1.1': {}
 
