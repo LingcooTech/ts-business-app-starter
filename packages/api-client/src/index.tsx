@@ -12,6 +12,22 @@ import {
   auditQuerySchema,
   apiErrorResponseSchema,
   currentPermissionsSchema,
+  createAnnouncementRequestSchema,
+  jobDetailSchema,
+  jobListResponseSchema,
+  jobQuerySchema,
+  mailDeliveryListResponseSchema,
+  mailDeliveryQuerySchema,
+  notificationListResponseSchema,
+  notificationQuerySchema,
+  notificationSchema,
+  outboxEventSchema,
+  outboxListResponseSchema,
+  outboxQuerySchema,
+  queuedMailResponseSchema,
+  retryJobResponseSchema,
+  sendTestMailRequestSchema,
+  unreadNotificationCountSchema,
   rotateSettingsResponseSchema,
   settingTestResponseSchema,
   settingViewSchema,
@@ -19,11 +35,21 @@ import {
   sessionIdentitySchema,
   type AuditQuery,
   type AuditLog,
+  type CreateAnnouncementRequest,
   type ClearSettingRequest,
   type ChangePasswordRequest,
   type ConfirmPasswordReset,
   type CurrentPermissions,
   type LoginRequest,
+  type Job,
+  type JobDetail,
+  type JobQuery,
+  type MailDelivery,
+  type MailDeliveryQuery,
+  type Notification,
+  type NotificationQuery,
+  type OutboxEvent,
+  type OutboxQuery,
   type PaginationMeta,
   type SaveSettingRequest,
   type SettingTestResponse,
@@ -39,6 +65,11 @@ const queryKeys = {
   permissions: ['access', 'permissions'] as const,
   settings: ['settings'] as const,
   audit: (query: AuditQuery) => ['audit', query] as const,
+  jobs: (query: JobQuery) => ['jobs', query] as const,
+  outbox: (query: OutboxQuery) => ['outbox', query] as const,
+  mail: (query: MailDeliveryQuery) => ['mail', query] as const,
+  notifications: (query: NotificationQuery) => ['notifications', query] as const,
+  unreadNotifications: ['notifications', 'unread-count'] as const,
 };
 
 export class ApiRequestError extends ApiError {
@@ -149,6 +180,104 @@ export class ApiClient {
     return this.request(`/api/audit?${search.toString()}`, auditListResponseSchema);
   }
 
+  async listJobs(input: Partial<JobQuery> = {}): Promise<{ items: Job[]; meta: PaginationMeta }> {
+    const query = jobQuerySchema.parse(input);
+    return this.request(`/api/jobs?${this.queryString(query)}`, jobListResponseSchema);
+  }
+
+  async getJob(id: string): Promise<JobDetail> {
+    return this.request(`/api/jobs/${encodeURIComponent(id)}`, jobDetailSchema);
+  }
+
+  async retryJob(id: string): Promise<Job> {
+    const response = await this.request(
+      `/api/jobs/${encodeURIComponent(id)}/retry`,
+      retryJobResponseSchema,
+      { method: 'POST' },
+    );
+    return response.job;
+  }
+
+  async listOutbox(
+    input: Partial<OutboxQuery> = {},
+  ): Promise<{ items: OutboxEvent[]; meta: PaginationMeta }> {
+    const query = outboxQuerySchema.parse(input);
+    return this.request(`/api/outbox?${this.queryString(query)}`, outboxListResponseSchema);
+  }
+
+  async retryOutboxEvent(id: string): Promise<OutboxEvent> {
+    const responseSchema = z.object({ event: outboxEventSchema });
+    const response = await this.request(
+      `/api/outbox/${encodeURIComponent(id)}/retry`,
+      responseSchema,
+      { method: 'POST' },
+    );
+    return response.event;
+  }
+
+  async listMailDeliveries(
+    input: Partial<MailDeliveryQuery> = {},
+  ): Promise<{ items: MailDelivery[]; meta: PaginationMeta }> {
+    const query = mailDeliveryQuerySchema.parse(input);
+    return this.request(
+      `/api/mail/deliveries?${this.queryString(query)}`,
+      mailDeliveryListResponseSchema,
+    );
+  }
+
+  async sendTestMail(to: string): Promise<MailDelivery> {
+    const input = sendTestMailRequestSchema.parse({ to });
+    const response = await this.request('/api/mail/test', queuedMailResponseSchema, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+    return response.delivery;
+  }
+
+  async listNotifications(
+    input: Partial<NotificationQuery> = {},
+  ): Promise<{ items: Notification[]; meta: PaginationMeta }> {
+    const query = notificationQuerySchema.parse(input);
+    return this.request(
+      `/api/notifications?${this.queryString(query)}`,
+      notificationListResponseSchema,
+    );
+  }
+
+  async unreadNotificationCount(): Promise<number> {
+    const response = await this.request(
+      '/api/notifications/unread-count',
+      unreadNotificationCountSchema,
+    );
+    return response.count;
+  }
+
+  async markNotificationRead(id: string): Promise<Notification> {
+    return this.request(`/api/notifications/${encodeURIComponent(id)}/read`, notificationSchema, {
+      method: 'POST',
+    });
+  }
+
+  async archiveNotification(id: string): Promise<Notification> {
+    return this.request(
+      `/api/notifications/${encodeURIComponent(id)}/archive`,
+      notificationSchema,
+      { method: 'POST' },
+    );
+  }
+
+  async createAnnouncement(input: CreateAnnouncementRequest) {
+    const request = createAnnouncementRequestSchema.parse(input);
+    return this.request(
+      '/api/notifications/announcements',
+      z.object({ id: z.uuid() }).passthrough(),
+      {
+        method: 'POST',
+        body: JSON.stringify(request),
+      },
+    );
+  }
+
   async changePassword(input: ChangePasswordRequest): Promise<void> {
     await this.request('/api/auth/password/change', acceptedActionSchema, {
       method: 'POST',
@@ -218,6 +347,14 @@ export class ApiClient {
       );
     }
     return schema.parse(payload);
+  }
+
+  private queryString(query: Record<string, unknown>): string {
+    const search = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined) search.set(key, String(value));
+    }
+    return search.toString();
   }
 }
 
@@ -297,6 +434,104 @@ export function useAuditLogs(input: Partial<AuditQuery> = {}) {
   const api = useApiClient();
   const query = auditQuerySchema.parse(input);
   return useQuery({ queryKey: queryKeys.audit(query), queryFn: () => api.listAuditLogs(query) });
+}
+
+export function useJobs(input: Partial<JobQuery> = {}) {
+  const api = useApiClient();
+  const query = jobQuerySchema.parse(input);
+  return useQuery({ queryKey: queryKeys.jobs(query), queryFn: () => api.listJobs(query) });
+}
+
+export function useRetryJob() {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.retryJob(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['jobs'] }),
+  });
+}
+
+export function useOutbox(input: Partial<OutboxQuery> = {}) {
+  const api = useApiClient();
+  const query = outboxQuerySchema.parse(input);
+  return useQuery({ queryKey: queryKeys.outbox(query), queryFn: () => api.listOutbox(query) });
+}
+
+export function useRetryOutboxEvent() {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.retryOutboxEvent(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['outbox'] }),
+  });
+}
+
+export function useMailDeliveries(input: Partial<MailDeliveryQuery> = {}) {
+  const api = useApiClient();
+  const query = mailDeliveryQuerySchema.parse(input);
+  return useQuery({
+    queryKey: queryKeys.mail(query),
+    queryFn: () => api.listMailDeliveries(query),
+  });
+}
+
+export function useSendTestMail() {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (to: string) => api.sendTestMail(to),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['mail'] });
+      void queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    },
+  });
+}
+
+export function useNotifications(input: Partial<NotificationQuery> = {}) {
+  const api = useApiClient();
+  const query = notificationQuerySchema.parse(input);
+  return useQuery({
+    queryKey: queryKeys.notifications(query),
+    queryFn: () => api.listNotifications(query),
+  });
+}
+
+export function useUnreadNotificationCount() {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.unreadNotifications,
+    queryFn: () => api.unreadNotificationCount(),
+  });
+}
+
+export function useMarkNotificationRead() {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.markNotificationRead(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+}
+
+export function useArchiveNotification() {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.archiveNotification(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+}
+
+export function useCreateAnnouncement() {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateAnnouncementRequest) => api.createAnnouncement(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['outbox'] });
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
 }
 
 export function useLogin() {

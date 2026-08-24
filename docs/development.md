@@ -76,6 +76,9 @@ pnpm generate:module users
 
 不要在 Controller 中直接编写复杂数据库查询，也不要把多个业务模块的状态放进全局单例。
 
+后台任务、Outbox、邮件和通知的 Handler、事务与幂等约束见
+[异步基础](async-foundation.md)。本地验证实际消费时需要同时运行 `pnpm dev:worker`。
+
 ## Adding a frontend page
 
 管理后台页面放在：

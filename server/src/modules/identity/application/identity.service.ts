@@ -12,6 +12,7 @@ import type {
 
 import type { PublicIdentityUser, ResolvedSession } from '../domain/identity.types';
 import { IdentityRepository } from '../infrastructure/persistence/identity.repository';
+import { MailService, emailVerificationMail, passwordResetMail } from '../../mail/public';
 
 type LoginResult = {
   sessionToken: string;
@@ -40,6 +41,7 @@ export class IdentityService {
   constructor(
     private readonly repository: IdentityRepository,
     private readonly config: ConfigService,
+    private readonly mail: MailService,
   ) {}
 
   async login(input: LoginRequest, userAgent: string | null): Promise<LoginResult> {
@@ -109,6 +111,11 @@ export class IdentityService {
       tokenDigest: digest(actionToken),
       expiresAt: this.actionTokenExpiry(),
     });
+    await this.mail.queue({
+      ...passwordResetMail(user.email, this.actionUrl('/reset-password', actionToken)),
+      template: 'password-reset',
+      idempotencyKey: `password-reset:${digest(actionToken)}`,
+    });
     return this.exposedActionToken(actionToken);
   }
 
@@ -121,12 +128,19 @@ export class IdentityService {
   }
 
   async requestEmailVerification(userId: string): Promise<{ accepted: true; testToken?: string }> {
+    const credential = await this.repository.findCredentialByUserId(userId);
+    if (!credential || credential.user.status !== 'active') return { accepted: true };
     const actionToken = token();
     await this.repository.createActionToken({
       userId,
       purpose: 'email_verification',
       tokenDigest: digest(actionToken),
       expiresAt: this.actionTokenExpiry(),
+    });
+    await this.mail.queue({
+      ...emailVerificationMail(credential.user.email, this.actionUrl('/verify-email', actionToken)),
+      template: 'email-verification',
+      idempotencyKey: `email-verification:${digest(actionToken)}`,
     });
     return this.exposedActionToken(actionToken);
   }
@@ -157,6 +171,12 @@ export class IdentityService {
     return new Date(
       Date.now() + this.config.getOrThrow<number>('AUTH_ACTION_TOKEN_TTL_SECONDS') * 1000,
     );
+  }
+
+  private actionUrl(path: string, actionToken: string): string {
+    const url = new URL(path, this.config.getOrThrow<string>('PUBLIC_WEB_URL'));
+    url.searchParams.set('token', actionToken);
+    return url.toString();
   }
 
   private exposedActionToken(actionToken: string): { accepted: true; testToken?: string } {

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ApiError } from '@lingcoo-tech/http';
 
 import { CORE_SETTINGS } from '../domain/core-settings';
-import type { SettingDefinition } from '../domain/settings.types';
+import type { SettingDefinition, SettingTestResult } from '../domain/settings.types';
 
 @Injectable()
 export class SettingsRegistry {
@@ -17,6 +17,12 @@ export class SettingsRegistry {
       throw new Error(`Setting definition already registered: ${definition.key}`);
     }
     this.definitions.set(definition.key, definition);
+  }
+
+  attachTest(key: string, test: (value: unknown) => Promise<SettingTestResult>): void {
+    const definition = this.get(key);
+    if (definition.test) throw new Error(`Setting test already registered: ${key}`);
+    this.definitions.set(key, { ...definition, test });
   }
 
   list(): SettingDefinition[] {

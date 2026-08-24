@@ -7,6 +7,9 @@ const navigation = [
   { to: '/access', label: '权限中心', mark: '◇', permission: 'roles.read' },
   { to: '/settings', label: '系统设置', mark: '⚙', permission: 'settings.read' },
   { to: '/audit', label: '审计日志', mark: '≡', permission: 'audit.read' },
+  { to: '/jobs', label: '后台任务', mark: '↻', permission: 'jobs.read' },
+  { to: '/mail', label: '邮件投递', mark: '✉', permission: 'integrations.manage' },
+  { to: '/notifications', label: '通知中心', mark: '●' },
   { to: '/foundation', label: '基础能力', mark: '▦' },
   { to: '/ui', label: 'UI 组件', mark: '◫' },
 ];

@@ -10,6 +10,9 @@ import { ForgotPasswordPage, LoginPage } from './features/auth/pages';
 import { DashboardPage } from './features/dashboard/page';
 import { FoundationPage } from './features/foundation/page';
 import { SettingsPage } from './features/settings/page';
+import { JobsPage } from './features/jobs/page';
+import { MailPage } from './features/mail/page';
+import { NotificationsPage } from './features/notifications/page';
 import { UiPage } from './features/ui-showcase/page';
 
 export function App() {
@@ -29,6 +32,13 @@ export function App() {
           <Route element={<RequirePermission permission="audit.read" />}>
             <Route path="audit" element={<AuditPage />} />
           </Route>
+          <Route element={<RequirePermission permission="jobs.read" />}>
+            <Route path="jobs" element={<JobsPage />} />
+          </Route>
+          <Route element={<RequirePermission permission="integrations.manage" />}>
+            <Route path="mail" element={<MailPage />} />
+          </Route>
+          <Route path="notifications" element={<NotificationsPage />} />
           <Route path="foundation" element={<FoundationPage />} />
           <Route path="ui" element={<UiPage />} />
           <Route path="account" element={<AccountPage />} />

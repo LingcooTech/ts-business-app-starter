@@ -18,12 +18,19 @@ const env = [
   'APP_NAME=ts-business-app-starter-smoke',
   'APP_VERSION=smoke',
   'CORS_ORIGIN=http://localhost:5173',
+  'PUBLIC_WEB_URL=http://localhost',
   'DATABASE_URL=postgres://app:app_password@postgres:5432/app',
   'API_DOCS_ENABLED=false',
   'AUTH_COOKIE_SECURE=true',
   'AUTH_EXPOSE_TEST_TOKENS=false',
   'SETTINGS_ENCRYPTION_CURRENT_KEY_ID=smoke-v1',
   'SETTINGS_ENCRYPTION_KEYS={"smoke-v1":"smoke-settings-encryption-key-123456789"}',
+  'MAIL_TRANSPORT=log',
+  'JOB_POLL_INTERVAL_MS=50',
+  'JOB_BACKOFF_BASE_MS=100',
+  'JOB_BACKOFF_MAX_MS=200',
+  'JOB_LOCK_TIMEOUT_SECONDS=10',
+  'JOB_HEARTBEAT_INTERVAL_MS=1000',
   `BOOTSTRAP_OWNER_EMAIL=${ownerEmail}`,
   `BOOTSTRAP_OWNER_PASSWORD=${ownerPassword}`,
   'POSTGRES_DB=app',
@@ -85,7 +92,19 @@ try {
   compose(['run', '--rm', '--no-deps', 'api', 'node', 'server/dist/migrate.js']);
   compose(['run', '--rm', '--no-deps', 'api', 'node', 'server/dist/bootstrap.js']);
   compose(['run', '--rm', '--no-deps', 'api', 'node', 'server/dist/bootstrap.js']);
-  compose(['up', '-d', 'api', 'worker', 'caddy']);
+  composeCapture([
+    'exec',
+    '-T',
+    'postgres',
+    'psql',
+    '-U',
+    'app',
+    '-d',
+    'app',
+    '-c',
+    "insert into jobs(type, payload, max_attempts, idempotency_key) values ('smoke.always-fails', '{}', 2, 'docker-smoke-retry'); insert into jobs(type, payload, status, attempts, max_attempts, idempotency_key, locked_by, locked_at, heartbeat_at) values ('smoke.stale-lock', '{}', 'running', 0, 1, 'docker-smoke-stale', 'dead-worker', now() - interval '1 hour', now() - interval '1 hour')",
+  ]);
+  compose(['up', '-d', '--wait', '--scale', 'worker=2', 'api', 'worker', 'caddy']);
   await waitForReady(`http://127.0.0.1:${hostPort}/health/ready`);
   execFileSync('curl', ['-fsS', `http://127.0.0.1:${hostPort}/health/live`], { stdio: 'inherit' });
   for (const route of [
@@ -96,6 +115,9 @@ try {
     '/admin/access',
     '/admin/settings',
     '/admin/audit',
+    '/admin/jobs',
+    '/admin/mail',
+    '/admin/notifications',
   ]) {
     execFileSync(
       'curl',
@@ -122,6 +144,22 @@ try {
   ]);
   if (secretStorage !== '1') throw new Error('sensitive setting was not stored as ciphertext');
 
+  const stageFiveState = composeCapture([
+    'exec',
+    '-T',
+    'postgres',
+    'psql',
+    '-U',
+    'app',
+    '-d',
+    'app',
+    '-tAc',
+    "select (select status || ':' || attempts from jobs where idempotency_key = 'docker-smoke-retry') || ',' || (select status || ':' || attempts from jobs where idempotency_key = 'docker-smoke-stale') || ',' || (select count(*) from job_attempts where job_id = (select id from jobs where idempotency_key = 'docker-smoke-retry')) || ',' || (select count(*) from notification_announcements a join outbox_events o on o.id = a.outbox_event_id where a.dedupe_key = 'docker-stage5-smoke-notification') || ',' || (select count(*) from notifications where dedupe_key = 'docker-stage5-smoke-notification')",
+  ]);
+  if (stageFiveState !== 'dead:2,dead:1,2,1,1') {
+    throw new Error(`stage 5 worker invariants failed: ${stageFiveState}`);
+  }
+
   let immutable = false;
   try {
     composeCapture([
@@ -143,6 +181,13 @@ try {
   }
   if (!immutable) throw new Error('audit log database immutability guard did not reject an update');
   console.log('Docker production smoke test passed');
+} catch (error) {
+  try {
+    compose(['logs', '--no-color', '--tail', '300', 'api', 'worker']);
+  } catch {
+    console.error('Unable to collect Docker service logs after smoke failure');
+  }
+  throw error;
 } finally {
   try {
     compose(['down', '--volumes', '--remove-orphans']);

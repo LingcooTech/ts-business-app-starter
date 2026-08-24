@@ -164,6 +164,9 @@ importers:
       '@lingcoo-tech/http':
         specifier: 0.1.1
         version: 0.1.1
+      '@lingcoo-tech/mailer':
+        specifier: 0.1.1
+        version: 0.1.1
       '@lingcoo-tech/security':
         specifier: 0.1.1
         version: 0.1.1
@@ -1468,6 +1471,12 @@ packages:
     resolution:
       {
         integrity: sha512-EXgsnyfpWIncQY8ify9YsJjDhOOpY7ziwAn5hdW2+4lE+tajnl1ylhkX3y6e3FM6d9LUorwI3iholk+2dNvkVQ==,
+      }
+
+  '@lingcoo-tech/mailer@0.1.1':
+    resolution:
+      {
+        integrity: sha512-mxe56/DTbd8AMISxrYRyiHgCm1QBjvE+xfXfTXJC0nAap3Pp+dyg8Phm3PsabmP2irx++2NN/yTFZ06JkU162A==,
       }
 
   '@lingcoo-tech/security@0.1.1':
@@ -3721,6 +3730,13 @@ packages:
       }
     engines: { node: '>=18' }
 
+  nodemailer@7.0.13:
+    resolution:
+      {
+        integrity: sha512-PNDFSJdP+KFgdsG3ZzMXCgquO7I6McjY2vlqILjtJd0hy8wEvtugS9xKRF2NWlPNGxvLCXlTNIae4serI7dinw==,
+      }
+    engines: { node: '>=6.0.0' }
+
   obug@2.1.4:
     resolution:
       {
@@ -5385,6 +5401,10 @@ snapshots:
 
   '@lingcoo-tech/http@0.1.1': {}
 
+  '@lingcoo-tech/mailer@0.1.1':
+    dependencies:
+      nodemailer: 7.0.13
+
   '@lingcoo-tech/security@0.1.1':
     dependencies:
       jose: 6.2.10
@@ -6659,6 +6679,8 @@ snapshots:
       lodash: 4.18.1
 
   node-releases@2.0.53: {}
+
+  nodemailer@7.0.13: {}
 
   obug@2.1.4: {}
 

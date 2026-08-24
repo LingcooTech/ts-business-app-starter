@@ -8,6 +8,7 @@ import {
   createPaginatedResponseSchema,
   createSortQuerySchema,
   isoDateTimeSchema,
+  notificationQuerySchema,
   paginationMeta,
   paginationQuerySchema,
   permissionKeySchema,
@@ -23,6 +24,16 @@ describe('shared API contracts', () => {
     });
     expect(paginationQuerySchema.parse({})).toEqual({ page: 1, pageSize: 20 });
     expect(() => paginationQuerySchema.parse({ pageSize: 101 })).toThrow();
+  });
+
+  it('keeps notification boolean queries stable across HTTP and parsed controller values', () => {
+    expect(notificationQuerySchema.parse({ unreadOnly: 'true' })).toMatchObject({
+      unreadOnly: true,
+      includeArchived: false,
+    });
+    expect(
+      notificationQuerySchema.parse({ unreadOnly: true, includeArchived: false }),
+    ).toMatchObject({ unreadOnly: true, includeArchived: false });
   });
 
   it('builds stable pagination metadata, including the empty case', () => {

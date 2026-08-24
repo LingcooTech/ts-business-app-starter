@@ -5,6 +5,7 @@ x-runtime-environment: &runtime-environment
   API_HOST: 0.0.0.0
   API_PORT: 8090
   CORS_ORIGIN: ${CORS_ORIGIN:?CORS_ORIGIN is required}
+  PUBLIC_WEB_URL: ${PUBLIC_WEB_URL:?PUBLIC_WEB_URL is required}
   DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
   API_DOCS_ENABLED: ${API_DOCS_ENABLED:-false}
   AUTH_SESSION_TTL_SECONDS: ${AUTH_SESSION_TTL_SECONDS:-604800}
@@ -17,7 +18,19 @@ x-runtime-environment: &runtime-environment
   SETTINGS_ENCRYPTION_CURRENT_KEY_ID: ${SETTINGS_ENCRYPTION_CURRENT_KEY_ID:?SETTINGS_ENCRYPTION_CURRENT_KEY_ID is required}
   SETTINGS_ENCRYPTION_KEYS: ${SETTINGS_ENCRYPTION_KEYS:?SETTINGS_ENCRYPTION_KEYS is required}
   SUPPORT_EMAIL: ${SUPPORT_EMAIL:-}
+  MAIL_TRANSPORT: ${MAIL_TRANSPORT:-log}
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_SECURE: ${SMTP_SECURE:-false}
+  SMTP_USER: ${SMTP_USER:-}
   SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  SMTP_FROM: ${SMTP_FROM:-}
+  JOB_POLL_INTERVAL_MS: ${JOB_POLL_INTERVAL_MS:-500}
+  JOB_BATCH_SIZE: ${JOB_BATCH_SIZE:-20}
+  JOB_LOCK_TIMEOUT_SECONDS: ${JOB_LOCK_TIMEOUT_SECONDS:-60}
+  JOB_HEARTBEAT_INTERVAL_MS: ${JOB_HEARTBEAT_INTERVAL_MS:-10000}
+  JOB_BACKOFF_BASE_MS: ${JOB_BACKOFF_BASE_MS:-1000}
+  JOB_BACKOFF_MAX_MS: ${JOB_BACKOFF_MAX_MS:-300000}
   BOOTSTRAP_OWNER_EMAIL: ${BOOTSTRAP_OWNER_EMAIL:-}
   BOOTSTRAP_OWNER_PASSWORD: ${BOOTSTRAP_OWNER_PASSWORD:-}
 
@@ -74,6 +87,18 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "process.exit(require('fs').readFileSync('/proc/1/cmdline','utf8').includes('worker.js') ? 0 : 1)",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+      start_period: 5s
     read_only: true
     tmpfs:
       - /tmp

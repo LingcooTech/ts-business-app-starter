@@ -8,6 +8,10 @@ import { DatabaseModule } from './infrastructure/database/database.module';
 import { HealthModule } from './infrastructure/health/health.module';
 import { AccessControlModule } from './modules/access-control/public';
 import { SettingsModule } from './modules/settings/public';
+import { JobsModule } from './modules/jobs/public';
+import { MailModule } from './modules/mail/public';
+import { NotificationsModule } from './modules/notifications/public';
+import { OutboxModule } from './modules/outbox/public';
 
 @Module({
   imports: [
@@ -17,6 +21,10 @@ import { SettingsModule } from './modules/settings/public';
     HealthModule,
     AccessControlModule,
     SettingsModule,
+    JobsModule,
+    OutboxModule,
+    MailModule,
+    NotificationsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: FastifyThrottlerGuard }],
 })

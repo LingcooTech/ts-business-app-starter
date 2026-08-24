@@ -29,6 +29,7 @@ export const environmentSchema = z
     API_HOST: z.string().trim().min(1).default('0.0.0.0'),
     API_PORT: z.coerce.number().int().min(1).max(65_535).default(8090),
     CORS_ORIGIN: z.string().default('http://localhost:5173,http://localhost:5174'),
+    PUBLIC_WEB_URL: z.string().url().default('http://localhost:5174'),
     DATABASE_URL: z.string().url(),
     API_DOCS_ENABLED: z
       .enum(['true', 'false'])
@@ -63,7 +64,23 @@ export const environmentSchema = z
     SUPPORT_EMAIL: optionalEnvironmentValue(
       z.string().trim().toLowerCase().pipe(z.email().max(320)),
     ),
+    MAIL_TRANSPORT: z.enum(['log', 'smtp']).default('log'),
+    SMTP_HOST: optionalEnvironmentValue(z.string().trim().min(1).max(255)),
+    SMTP_PORT: z.coerce.number().int().min(1).max(65_535).default(587),
+    SMTP_SECURE: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((value) => value === 'true'),
+    SMTP_USER: optionalEnvironmentValue(z.string().trim().min(1).max(320)),
     SMTP_PASSWORD: optionalEnvironmentValue(z.string().min(1).max(1000)),
+    SMTP_FROM: optionalEnvironmentValue(z.string().trim().min(1).max(320)),
+    JOB_WORKER_ID: optionalEnvironmentValue(z.string().trim().min(1).max(200)),
+    JOB_POLL_INTERVAL_MS: z.coerce.number().int().min(25).max(60_000).default(500),
+    JOB_BATCH_SIZE: z.coerce.number().int().min(1).max(1_000).default(20),
+    JOB_LOCK_TIMEOUT_SECONDS: z.coerce.number().int().min(10).max(86_400).default(60),
+    JOB_HEARTBEAT_INTERVAL_MS: z.coerce.number().int().min(1_000).max(30_000).default(10_000),
+    JOB_BACKOFF_BASE_MS: z.coerce.number().int().min(50).max(86_400_000).default(1_000),
+    JOB_BACKOFF_MAX_MS: z.coerce.number().int().min(100).max(604_800_000).default(300_000),
     BOOTSTRAP_OWNER_EMAIL: z.string().trim().optional(),
     BOOTSTRAP_OWNER_PASSWORD: z.string().optional(),
   })
@@ -101,6 +118,20 @@ export const environmentSchema = z
         code: 'custom',
         path: ['SETTINGS_ENCRYPTION_CURRENT_KEY_ID'],
         message: 'must identify a key in SETTINGS_ENCRYPTION_KEYS',
+      });
+    }
+    if (value.JOB_HEARTBEAT_INTERVAL_MS >= value.JOB_LOCK_TIMEOUT_SECONDS * 1_000) {
+      context.addIssue({
+        code: 'custom',
+        path: ['JOB_HEARTBEAT_INTERVAL_MS'],
+        message: 'must be less than JOB_LOCK_TIMEOUT_SECONDS',
+      });
+    }
+    if (value.JOB_BACKOFF_BASE_MS > value.JOB_BACKOFF_MAX_MS) {
+      context.addIssue({
+        code: 'custom',
+        path: ['JOB_BACKOFF_BASE_MS'],
+        message: 'must not exceed JOB_BACKOFF_MAX_MS',
       });
     }
     if (

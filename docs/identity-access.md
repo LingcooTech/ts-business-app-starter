@@ -39,8 +39,9 @@ The command always synchronizes the permission catalog and the system Owner role
 that account and assigns Owner. It is idempotent and never overwrites an existing password.
 
 Production must use Secure Cookies and must never enable `AUTH_EXPOSE_TEST_TOKENS`. The latter is a
-development bridge until Mail and Transactional Outbox are delivered; it allows local clients to
-exercise reset and verification flows without SMTP.
+development/testing bridge that exposes the same token embedded in the queued message. Password
+reset and verification requests now enqueue mail through `MailModule`; configure `PUBLIC_WEB_URL`
+so the message points at the public Web application.
 
 Keep `AUTH_COOKIE_SAME_SITE=lax` when Admin/Web and API are same-site. A genuinely cross-site
 frontend may set it to `none`, which configuration validation permits only with Secure Cookies.

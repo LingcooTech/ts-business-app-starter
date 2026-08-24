@@ -11,9 +11,11 @@ Starter 的长期定位和验收标准见[质量标准](docs/quality-bar.md)。
 身份、会话、CSRF、权限与 Owner 初始化见[Identity 与 Access Control](docs/identity-access.md)。
 前端 workspace、路由、会话和扩展约定见[前端应用基础](docs/frontend-foundation.md)。
 设置加密、密钥轮换和不可变审计见[Settings 与 Audit](docs/settings-audit.md)。
+PostgreSQL Jobs、Outbox、邮件与通知见[异步基础](docs/async-foundation.md)。
 
-> 当前状态：阶段 4。独立仓库基线、Contracts、Identity、Access Control、共享 UI、
-> API Client、Admin/Web 应用壳、Settings 与 Audit 已完成；任务和外部服务按实施计划逐项交付。
+> 当前状态：阶段 5。独立仓库基线、Contracts、Identity、Access Control、共享 UI、
+> API Client、Admin/Web 应用壳、Settings、Audit、Jobs、Outbox、Mail 与 Notifications 已完成；
+> 下一阶段是对象存储。
 
 ## 1. 项目定位
 
@@ -113,7 +115,7 @@ TS Business App Starter 默认采用尽可能简单的运行结构，不要求 K
         ├── Docker / Docker Compose
         └── GitHub Actions
 
-Admin 和 Web 默认提供路由、会话恢复、错误边界、共享 UI 和真实账户流程；其他终端也可以在业务项目中通过 API 接入。Server 中 API 负责实时请求，Worker 只提供通用的独立运行入口，不预置队列或业务任务。
+Admin 和 Web 默认提供路由、会话恢复、错误边界、共享 UI 和真实账户流程；其他终端也可以在业务项目中通过 API 接入。Server 中 API 负责实时请求，Worker 消费 PostgreSQL Jobs、Transactional Outbox、邮件和通知任务。
 
 ## 6. Repository 结构
 

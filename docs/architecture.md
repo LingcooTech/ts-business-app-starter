@@ -65,9 +65,9 @@ Business Starter 提供或计划提供以下非行业化模块：
 - access-control（已交付）；
 - settings（已交付）；
 - audit（已交付）；
-- jobs 与 transactional outbox；
-- notifications；
-- mail；
+- jobs 与 transactional outbox（已交付）；
+- notifications（已交付）；
+- mail（已交付）；
 - storage；
 - payments。
 
@@ -81,6 +81,12 @@ Owner，不预置行业角色。
 Settings 通过注册表限制可管理的配置键，采用数据库覆盖、环境变量兜底，并使用
 `@lingcoo-tech/crypto` 保存带 Key ID 的 AES-256-GCM 密文。Audit 是显式业务事件而非访问日志；
 设置变更与审计事件在同一事务提交，数据库触发器禁止修改或删除既有审计记录。
+
+Jobs 使用 PostgreSQL 锁定领取、心跳、超时恢复、指数退避和死信，不依赖 Redis。
+Transactional Outbox 要求调用方传入业务事务，保证业务记录与事件共同提交。Mail 通过
+`@lingcoo-tech/mailer` 的公开 SMTP Adapter 投递；HTTP 只写入任务，实际发送由独立 Worker
+完成。Notifications 以收件人与 Dedupe Key 的数据库唯一约束抵抗事件重放。详细运行约束见
+[异步基础](async-foundation.md)。
 
 ## Runtime topology
 

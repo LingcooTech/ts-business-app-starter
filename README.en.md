@@ -12,10 +12,11 @@ acceptance evidence, and the resume protocol after an interrupted development se
 See [Identity and Access Control](docs/identity-access.md) for sessions, CSRF, permissions, and Owner bootstrap.
 See [前端应用基础](docs/frontend-foundation.md) for frontend workspace, routing, session, and extension boundaries.
 See [Settings and Audit](docs/settings-audit.md) for encryption, key rotation, and immutable audit events.
+See [Jobs, Transactional Outbox, Mail, and Notifications](docs/async-foundation.md) for the asynchronous runtime.
 
-> Current status: phase 4. The independent baseline, Contracts, Identity, Access Control, shared
-> UI, API Client, Admin/Web application shells, Settings, and Audit are delivered. Jobs and external
-> providers remain incremental work.
+> Current status: phase 5. The independent baseline, Contracts, Identity, Access Control, shared
+> UI, API Client, Admin/Web application shells, Settings, Audit, Jobs, Outbox, Mail, and Notifications
+> are delivered. Object storage is next.
 
 ## 1. Positioning
 
@@ -115,7 +116,7 @@ In a measurement of the blank starter on a server with 2 CPU cores and 3.6 GB RA
         ├── Docker / Docker Compose
         └── GitHub Actions
 
-Admin and Web provide routing, session restoration, error boundaries, shared UI, and real account flows. A mini program, mobile app, or another terminal can also consume the API. The API handles real-time requests, while the Worker provides only a generic standalone process entry point.
+Admin and Web provide routing, session restoration, error boundaries, shared UI, and real account flows. A mini program, mobile app, or another terminal can also consume the API. The API handles real-time requests, while the Worker consumes PostgreSQL jobs, transactional outbox events, mail, and notification work.
 
 ## 6. Repository structure
 

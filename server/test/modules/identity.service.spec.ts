@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { IdentityService } from '../../src/modules/identity/application/identity.service';
 import type { IdentityRepository } from '../../src/modules/identity/infrastructure/persistence/identity.repository';
+import type { MailService } from '../../src/modules/mail/public';
 
 const user = {
   id: 'fdda765f-fc57-5604-a269-52a7df8164ec',
@@ -37,6 +38,7 @@ describe('IdentityService', () => {
     | 'createUser';
   let repository: Record<RepositoryMethod, ReturnType<typeof vi.fn>>;
   let service: IdentityService;
+  let mail: { queue: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     repository = {
@@ -59,12 +61,15 @@ describe('IdentityService', () => {
         if (key === 'AUTH_SESSION_TTL_SECONDS') return 604_800;
         if (key === 'AUTH_ACTION_TOKEN_TTL_SECONDS') return 3600;
         if (key === 'AUTH_EXPOSE_TEST_TOKENS') return true;
+        if (key === 'PUBLIC_WEB_URL') return 'https://app.example.com';
         throw new Error(`Unexpected config key: ${key}`);
       }),
     };
+    mail = { queue: vi.fn().mockResolvedValue({ id: 'delivery-id' }) };
     service = new IdentityService(
       repository as unknown as IdentityRepository,
       config as unknown as ConfigService,
+      mail as unknown as MailService,
     );
   });
 
@@ -131,6 +136,32 @@ describe('IdentityService', () => {
         userId: user.id,
         purpose: 'password_reset',
         tokenDigest: digest(result.testToken!),
+      }),
+    );
+    expect(mail.queue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: user.email,
+        template: 'password-reset',
+        text: expect.stringContaining(
+          `https://app.example.com/reset-password?token=${result.testToken}`,
+        ),
+      }),
+    );
+  });
+
+  it('queues an email verification message with the action URL', async () => {
+    repository.findCredentialByUserId.mockResolvedValue({ user, passwordHash: 'unused' });
+
+    const result = await service.requestEmailVerification(user.id);
+
+    expect(result.testToken).toHaveLength(43);
+    expect(mail.queue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: user.email,
+        template: 'email-verification',
+        text: expect.stringContaining(
+          `https://app.example.com/verify-email?token=${result.testToken}`,
+        ),
       }),
     );
   });

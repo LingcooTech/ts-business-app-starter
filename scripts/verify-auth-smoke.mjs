@@ -86,6 +86,142 @@ if (
   throw new Error('setting modification audit event is missing');
 }
 
+const queuedAt = performance.now();
+const mailResponse = await fetch(`${baseUrl}/api/mail/test`, {
+  method: 'POST',
+  headers: {
+    cookie: cookieHeader,
+    'content-type': 'application/json',
+    'x-csrf-token': identity.csrfToken,
+  },
+  body: JSON.stringify({ to: email }),
+});
+const queuedMail = await json(mailResponse);
+if (performance.now() - queuedAt > 1_500 || queuedMail.delivery.status !== 'queued') {
+  throw new Error('mail enqueue blocked the HTTP request or did not return queued state');
+}
+
+async function waitFor(description, operation, attempts = 50) {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const result = await operation();
+    if (result) return result;
+    if (attempt === attempts) throw new Error(`timed out waiting for ${description}`);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+}
+
+const resetQueuedAt = performance.now();
+const resetRequest = await json(
+  await fetch(`${baseUrl}/api/auth/password-reset/request`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email }),
+  }),
+);
+if (
+  resetRequest.accepted !== true ||
+  'testToken' in resetRequest ||
+  performance.now() - resetQueuedAt > 1_500
+) {
+  throw new Error('password reset did not securely enqueue its mail');
+}
+
+const resetMail = await waitFor('password reset mail delivery', async () => {
+  const response = await fetch(`${baseUrl}/api/mail/deliveries?status=sent`, {
+    headers: { cookie: cookieHeader },
+  });
+  const body = await json(response);
+  return body.items.find((item) => item.recipient === email && item.template === 'password-reset');
+});
+if (!resetMail.simulated) throw new Error('password reset bypassed the configured mail adapter');
+
+const deliveredMail = await waitFor('queued mail delivery', async () => {
+  const response = await fetch(`${baseUrl}/api/mail/deliveries?status=sent`, {
+    headers: { cookie: cookieHeader },
+  });
+  const body = await json(response);
+  return body.items.find((item) => item.id === queuedMail.delivery.id);
+});
+if (!deliveredMail.simulated) throw new Error('log mail transport did not expose simulated state');
+
+const jobsResponse = await fetch(`${baseUrl}/api/jobs?type=mail.send`, {
+  headers: { cookie: cookieHeader },
+});
+const mailJobs = await json(jobsResponse);
+const mailJob = mailJobs.items.find((item) => item.id === queuedMail.delivery.jobId);
+if (!mailJob || mailJob.status !== 'succeeded' || mailJob.attempts !== 1) {
+  throw new Error('mail job was duplicated or did not succeed');
+}
+
+const announcementBody = {
+  recipientUserId: identity.user.id,
+  category: 'smoke',
+  level: 'info',
+  title: 'Stage 5 smoke notification',
+  body: 'Transactional outbox delivery',
+  dedupeKey: 'docker-stage5-smoke-notification',
+};
+async function announce() {
+  return json(
+    await fetch(`${baseUrl}/api/notifications/announcements`, {
+      method: 'POST',
+      headers: {
+        cookie: cookieHeader,
+        'content-type': 'application/json',
+        'x-csrf-token': identity.csrfToken,
+      },
+      body: JSON.stringify(announcementBody),
+    }),
+  );
+}
+const firstAnnouncement = await announce();
+const duplicateAnnouncement = await announce();
+if (firstAnnouncement.id !== duplicateAnnouncement.id) {
+  throw new Error('announcement idempotency returned different records');
+}
+
+const deliveredNotification = await waitFor('outbox notification delivery', async () => {
+  const response = await fetch(`${baseUrl}/api/notifications`, {
+    headers: { cookie: cookieHeader },
+  });
+  const body = await json(response);
+  const matching = body.items.filter((item) => item.dedupeKey === announcementBody.dedupeKey);
+  if (matching.length > 1) throw new Error('notification dedupe key created duplicates');
+  return matching[0];
+});
+
+const unreadResponse = await fetch(`${baseUrl}/api/notifications/unread-count`, {
+  headers: { cookie: cookieHeader },
+});
+const unread = await json(unreadResponse);
+if (unread.count < 1) throw new Error('notification unread counter was not incremented');
+
+await json(
+  await fetch(`${baseUrl}/api/notifications/${deliveredNotification.id}/read`, {
+    method: 'POST',
+    headers: { cookie: cookieHeader, 'x-csrf-token': identity.csrfToken },
+  }),
+);
+await json(
+  await fetch(`${baseUrl}/api/notifications/${deliveredNotification.id}/archive`, {
+    method: 'POST',
+    headers: { cookie: cookieHeader, 'x-csrf-token': identity.csrfToken },
+  }),
+);
+
+const outboxResponse = await fetch(`${baseUrl}/api/outbox?topic=notifications.create`, {
+  headers: { cookie: cookieHeader },
+});
+const outbox = await json(outboxResponse);
+const notificationEvent = outbox.items.find((item) => item.id === firstAnnouncement.outboxEventId);
+if (
+  !notificationEvent ||
+  notificationEvent.status !== 'published' ||
+  notificationEvent.attempts !== 1
+) {
+  throw new Error('outbox event was duplicated or not published');
+}
+
 const csrfRejected = await fetch(`${baseUrl}/api/auth/logout`, {
   method: 'POST',
   headers: { cookie: cookieHeader },
@@ -103,4 +239,6 @@ await json(logout);
 const revoked = await fetch(`${baseUrl}/api/auth/me`, { headers: { cookie: cookieHeader } });
 if (revoked.status !== 401) throw new Error(`revoked session returned ${revoked.status}`);
 
-console.log('identity, access-control, settings, and audit smoke test passed');
+console.log(
+  'identity, access-control, settings, audit, jobs, outbox, mail, and notifications smoke test passed',
+);

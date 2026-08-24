@@ -2,20 +2,20 @@
 
 Last verified: 2026-08-24 (Asia/Shanghai)
 
-This document is the durable handoff for continuing development after an interrupted AI or developer
-session. Read it together with [`implementation-plan.md`](./implementation-plan.md). Do not restart a
-full repository assessment unless the recorded checks fail or Git history no longer matches this
-state.
+This is the durable continuation record for a developer or a later AI session. Read it with
+[`implementation-plan.md`](./implementation-plan.md) and
+[`async-foundation.md`](./async-foundation.md). Do not reassess completed stages from zero unless a
+recorded check fails or Git history no longer matches this state.
 
 ## Current conclusion
 
-Stages 0 through 4 are complete. Stage 4 delivers the Settings and Audit foundation and has passed
-the repository quality gate, generated-project smoke, and Docker production smoke. The next planned
-work is Stage 5: PostgreSQL Jobs, Transactional Outbox, Mail, and Notifications.
+Stages 0 through 5 are implemented. Stage 5 delivers PostgreSQL Jobs, Transactional Outbox, Mail,
+Notifications, shared contracts/API Client, and the corresponding Admin pages. The next planned
+work is Stage 6: Object Storage.
 
-The clean baseline before Stage 4 was commit `175432b` (`refactor: adopt shared http package`) on
-`main`. Stage 4 is the commit containing this document with message
-`feat: add settings and audit foundation`.
+Stage 4 is committed and pushed at `52c71d4` (`feat: add settings and audit foundation`). Stage 5 was
+implemented on that baseline and passed the complete acceptance set below. Its delivery commit is
+`feat: add jobs, outbox, mail, and notifications`.
 
 | Stage | Scope                                       | Status   |
 | ----- | ------------------------------------------- | -------- |
@@ -24,111 +24,116 @@ The clean baseline before Stage 4 was commit `175432b` (`refactor: adopt shared 
 | 2     | Identity and Access Control                 | Complete |
 | 3     | Shared frontend, Admin, and Web foundations | Complete |
 | 4     | Settings and Audit                          | Complete |
-| 5     | Jobs, Outbox, Mail, and Notifications       | Next     |
+| 5     | Jobs, Outbox, Mail, and Notifications       | Complete |
+| 6     | Object Storage                              | Next     |
 
-## Stage 4 delivered scope
+Progress is **6 of 9 stages (66.7%)** by stage count. The workload-weighted estimate is
+approximately **62%** because Payments and final product delivery remain larger than an average
+stage.
 
-### Settings
+## Stage 5 delivered scope
 
-- Registered setting definitions with per-key Zod validation; arbitrary keys are rejected.
-- Resolution order: database override, environment fallback, definition default, then unset.
-- Optimistic version checks through `expectedVersion` for updates and clears.
-- Sensitive values encrypted with `@lingcoo-tech/crypto` AES-256-GCM envelopes.
-- Separate database columns for public JSON and encrypted JSON, enforced by check constraints.
-- Versioned keyring with current Key ID, old-key decryption, and explicit transactional rotation.
-- Sensitive API views expose only configuration state and `maskedValue`; the shared Zod contract
-  rejects a sensitive response containing a `value` field.
-- Extensible connection-test hook. No fake SMTP connection test is registered yet; the real tester
-  belongs to Stage 5 MailModule.
+### PostgreSQL Jobs and Worker
 
-Initial definitions are:
+- `jobs` and immutable-per-generation `job_attempts` history in migration
+  `server/drizzle/0003_great_microchip.sql`.
+- Scheduled and priority claims through `FOR UPDATE SKIP LOCKED`; multiple Workers do not claim the
+  same execution.
+- Configurable attempts, exponential backoff with jitter, heartbeat, stale-lock recovery, and dead
+  state.
+- Manual retry is restricted to dead jobs. It increments `generation` and retains earlier attempts.
+- Optional producer idempotency keys, handler registry, recurring-job registry, and audit events for
+  retry/dead outcomes.
+- A real standalone Worker application context with startup dependency-graph regression coverage and
+  a production container health check.
 
-- `application.name` with `APP_NAME` fallback;
-- `application.support-email` with `SUPPORT_EMAIL` fallback;
-- `integrations.smtp-password` with `SMTP_PASSWORD` fallback and encrypted database override.
+### Transactional Outbox
 
-### Audit
+- `OutboxService.append` requires the caller's database transaction; business data and the event
+  commit or roll back together.
+- Topic handler registry, locked claims, retry/backoff, stale recovery, dead state, Dedupe Key, Admin
+  inspection, and dead-event retry.
+- The notification announcement is the reference transaction: announcement plus Outbox event are
+  committed together.
 
-- Append-only business audit events for `user`, `system`, and `job` actors.
-- Action, resource, outcome, Request ID, IP address, User-Agent, and metadata.
-- Recursive redaction for password, secret, token, authorization, cookie, credential, and private-key
-  metadata fields.
-- Query filtering, pagination, and detail API.
-- Settings save, clear, connection test, and secret rotation explicitly produce audit events.
-- Settings mutation and its audit event commit in the same PostgreSQL transaction.
-- PostgreSQL trigger rejects every `UPDATE` or `DELETE` against `audit_logs`.
+### Mail
+
+- `MailPort` and configurable `log`/`smtp` adapter. SMTP uses the published
+  `@lingcoo-tech/mailer@0.1.1`; no SMTP transport was copied into this repository.
+- Queueing persists delivery, `mail.send` job, and audit event in one transaction. SMTP never blocks
+  the originating HTTP request.
+- Password-reset and email-verification requests enqueue real action links derived from
+  `PUBLIC_WEB_URL`; administrator-invite and test templates are also available.
+- Registered SMTP Settings definitions with environment fallbacks. The password remains encrypted
+  by Settings; API delivery views never expose message bodies.
+- The Settings connection test sends through the public mail package. `MAIL_TRANSPORT=log` safely
+  records simulated delivery for local development and smoke tests.
+
+### Notifications
+
+- Per-user list, unread count, mark-read, and archive APIs.
+- Permission-protected Admin announcement creation.
+- Consumer-level idempotency enforced by the unique `(recipient_user_id, dedupe_key)` index. Replayed
+  Outbox events do not duplicate a notification.
 
 ### Contracts, client, and Admin
 
-- Contracts for setting views/mutations, key rotation, audit rows, filters, and pagination.
-- API Client methods and TanStack Query hooks for Settings and Audit.
-- Permission-protected Admin routes and navigation for `/admin/settings` and `/admin/audit`.
-- Settings override, clear, mask, and rotate controls; audit search and result table.
-
-The Admin pages are the planned Stage 4 foundation, not the final product UX. Provider-specific
-forms, real SMTP testing, richer audit filters/detail dialogs, and browser E2E expand in later stages.
+- Runtime Zod contracts and API Client methods/hooks for Jobs, Outbox, Mail, and Notifications.
+- Permission-protected Admin routes for `/admin/jobs`, `/admin/mail`, and `/admin/notifications`.
+- Job/Outbox status and dead retry, mail delivery/test view, and notification announcement/center
+  foundation.
 
 ## Stable interfaces
 
-### HTTP endpoints
+| Method | Path                               | Access/permission      | Purpose                 |
+| ------ | ---------------------------------- | ---------------------- | ----------------------- |
+| GET    | `/api/jobs`, `/api/jobs/:id`       | `jobs.read`            | Inspect jobs/attempts   |
+| POST   | `/api/jobs/:id/retry`              | `jobs.manage`          | Retry a dead job        |
+| GET    | `/api/outbox`, `/api/outbox/:id`   | `jobs.read`            | Inspect Outbox events   |
+| POST   | `/api/outbox/:id/retry`            | `jobs.manage`          | Retry a dead event      |
+| GET    | `/api/mail/deliveries[/:id]`       | `integrations.manage`  | Inspect safe mail views |
+| POST   | `/api/mail/test`                   | `integrations.manage`  | Queue a test message    |
+| GET    | `/api/notifications`               | Authenticated          | List own notifications  |
+| GET    | `/api/notifications/unread-count`  | Authenticated          | Own unread count        |
+| POST   | `/api/notifications/:id/read`      | Authenticated + CSRF   | Mark own item read      |
+| POST   | `/api/notifications/:id/archive`   | Authenticated + CSRF   | Archive own item        |
+| POST   | `/api/notifications/announcements` | `notifications.manage` | Publish an announcement |
 
-| Method | Path                                   | Permission        | Purpose                 |
-| ------ | -------------------------------------- | ----------------- | ----------------------- |
-| GET    | `/api/settings`                        | `settings.read`   | List resolved views     |
-| PUT    | `/api/settings/:key`                   | `settings.manage` | Save database override  |
-| DELETE | `/api/settings/:key`                   | `settings.manage` | Clear database override |
-| POST   | `/api/settings/:key/test`              | `settings.manage` | Run registered tester   |
-| POST   | `/api/settings/actions/rotate-secrets` | `settings.manage` | Rotate old-key rows     |
-| GET    | `/api/audit`                           | `audit.read`      | Filtered paginated list |
-| GET    | `/api/audit/:id`                       | `audit.read`      | Audit event detail      |
+Database ownership added in Stage 5:
 
-### Database ownership
+- Jobs: `jobs`, `job_attempts`;
+- Outbox: `outbox_events`;
+- Mail: `mail_deliveries`;
+- Notifications: `notification_announcements`, `notifications`.
 
-- Settings owns `system_settings`.
-- Audit owns `audit_logs`.
-- Migration: `server/drizzle/0002_common_black_widow.sql`.
-- `system_settings.updated_by` references Identity users with `ON DELETE SET NULL`.
-- Audit records intentionally have no mutable repository methods or foreign keys that could cascade
-  historical deletion.
+## Environment and operations
 
-### Environment
+- `PUBLIC_WEB_URL`: externally reachable Web root for reset/verification links;
+- `MAIL_TRANSPORT`: `log` or `smtp`, default `log`;
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`;
+- `JOB_POLL_INTERVAL_MS`, `JOB_BATCH_SIZE`, `JOB_LOCK_TIMEOUT_SECONDS`;
+- `JOB_HEARTBEAT_INTERVAL_MS`, `JOB_BACKOFF_BASE_MS`, `JOB_BACKOFF_MAX_MS`;
+- optional `JOB_WORKER_ID`; omit it when scaling so each process generates a unique ID.
 
-Required in production:
-
-- `SETTINGS_ENCRYPTION_CURRENT_KEY_ID`;
-- `SETTINGS_ENCRYPTION_KEYS`, a JSON object mapping Key IDs to secrets of at least 32 characters.
-
-Optional fallbacks:
-
-- `SUPPORT_EMAIL`;
-- `SMTP_PASSWORD`.
-
-Docker Compose passes missing optional values as empty strings. Environment validation normalizes
-those empty strings to `undefined`. Production startup rejects the checked-in development key,
-malformed keyring JSON, short secrets, and a current Key ID absent from the keyring.
-
-Rotation procedure:
-
-1. Add the new key and retain every old key in `SETTINGS_ENCRYPTION_KEYS`.
-2. Change `SETTINGS_ENCRYPTION_CURRENT_KEY_ID` to the new key.
-3. Call the rotation endpoint as an account with `settings.manage`.
-4. Verify `rotated` and audit events, then back up the database.
-5. Remove an old key only after no row references its Key ID.
+The heartbeat interval must be below the lock timeout. `docker-compose.prod.yml` runs API and Worker
+from the same image with separate commands. Scale Worker horizontally only against the same database
+and configuration.
 
 ## Public package adoption
 
-The application uses published packages instead of copying their primitives:
+Published packages are used rather than copied or wrapped:
 
-- `@lingcoo-tech/security@0.1.1`: password hashing and verification in Identity;
-- `@lingcoo-tech/http@0.1.1`: framework-neutral errors, envelopes, and guards;
-- `@lingcoo-tech/crypto@0.1.1`: authenticated encryption for Settings.
+- `@lingcoo-tech/security@0.1.1`: password hashing and verification;
+- `@lingcoo-tech/http@0.1.1`: framework-neutral HTTP errors/envelopes;
+- `@lingcoo-tech/crypto@0.1.1`: authenticated Settings encryption;
+- `@lingcoo-tech/mailer@0.1.1`: provider-neutral mail contract and SMTP adapter.
 
-`@lingcoo-tech/mailer` is deliberately not installed yet. It is adopted with the real Stage 5
-MailModule. The `/Users/admin/Projects/ts-app-packages` repository was not modified by Stage 4.
+Application templates, persistence, NestJS orchestration, retries, audit, and Admin UI correctly
+remain in this application repository. `/Users/admin/Projects/ts-app-packages` was not modified.
 
 ## Acceptance evidence
 
-The following completed successfully on the recorded implementation:
+The final Stage 5 acceptance set is:
 
 ```bash
 corepack pnpm check
@@ -139,42 +144,52 @@ corepack pnpm smoke:docker
 git diff --check
 ```
 
-Final automated test count: 42.
+All commands passed on 2026-08-24. Automated test count: 50 (Server 34, Contracts 9, API Client 4,
+UI 2, Design Tokens 1). The generated-project smoke repeated its own install, formatting, lint,
+typecheck, 50 tests, and production build in a newly generated standalone project.
 
-- Server: 27 tests;
-- Contracts: 8 tests;
-- API Client: 4 tests;
-- UI: 2 tests;
-- Design Tokens: 1 test.
+The Docker production smoke uses real PostgreSQL and the production image. It starts two Worker
+replicas and proves concurrent claim safety, a two-attempt dead job, stale-lock recovery, preserved
+attempt records, transactionally joined announcement/Outbox rows, one deduplicated notification,
+one-attempt Outbox publication, asynchronous test and password-reset mail, hidden production test
+tokens, encrypted Settings, append-only Audit, idempotent Bootstrap, health checks, and Admin/Web SPA
+routes. It removes the smoke containers, volumes, network, and image in `finally`.
 
-Docker production smoke proved all of the following against real PostgreSQL and the production image:
+During implementation the smoke test exposed and drove fixes for a missing Worker `AuditModule`
+dependency, an ineffective Worker health check, and double transformation of notification boolean
+query values. Regression tests now cover the Worker dependency graph and the boolean contract.
 
-- migration succeeded and Bootstrap remained idempotent across two executions;
-- API, Worker, Caddy, health endpoints, Identity, Access Control, Admin routes, Settings, and Audit
-  were operational;
-- a known plaintext setting value was absent from both `value_json` and `encrypted_value` text;
-- the stored sensitive row used `encrypted_value` plus the expected `key_id` and a null public value;
-- the API response contained only the mask;
-- the setting update produced a queryable audit event with Request ID;
-- direct SQL mutation failed with `audit_logs is append-only`;
-- smoke containers, volumes, network, and image were removed after completion.
+## Known delivery semantics
 
-One issue was found by the first Docker run: empty optional environment values from Compose failed
-validation. It was fixed by normalizing empty `SUPPORT_EMAIL` and `SMTP_PASSWORD` to `undefined`, with
-a regression test. The successful Docker run occurred after this fix.
+- Jobs and Outbox are at least once; every handler must be idempotent.
+- SMTP may duplicate after the provider accepts a message but before the Worker commits success. The
+  public package has no provider idempotency API, so this limitation is documented rather than hidden.
+- Outbox consumers are expected to finish within the lock timeout; stale processing is recovered.
+- Admin pages are operational foundations, not the final Stage 8 product UX/browser E2E suite.
+
+## Stage 6 next tasks
+
+Implement Object Storage as one complete vertical slice:
+
+1. Define provider-neutral object metadata, upload authorization, access URL, and deletion contracts.
+2. Add `ObjectStoragePort` plus local-development and Qiniu adapters without leaking provider
+   credentials or protocols into Controllers.
+3. Enforce MIME allowlists, maximum sizes, path-prefix ownership, public/private policies, and
+   short-lived upload authorization.
+4. Persist object metadata and audit configuration tests, authorization creation, and destructive
+   operations.
+5. Register encrypted Settings definitions with environment fallbacks and provider connection tests.
+6. Add API Client support and an Admin media picker with upload, search, selection, and safe deletion.
+7. Extend unit/integration coverage, generated-project smoke, and Docker production smoke for both
+   local and configured-provider boundaries.
 
 ## Resume protocol
 
-To continue without spending tokens re-evaluating completed stages:
-
-1. Read this document and `docs/implementation-plan.md`.
+1. Read this document, `implementation-plan.md`, and `async-foundation.md`.
 2. Run `git status --short` and `git log -5 --oneline`.
-3. Confirm the Stage 4 commit is present and the worktree is clean.
-4. Start Stage 5 from its schema and transaction boundaries; do not rewrite Settings, Audit, HTTP,
-   Identity, or Access Control unless a reproducible regression requires it.
-5. Reuse `SettingsRegistry` for Mail configuration and its real connection tester.
-6. Use `AuditService` for explicit Mail, Jobs, Outbox, and Notification business events.
-7. Adopt `@lingcoo-tech/mailer`; do not copy SMTP transport code into the application.
-
-The local Docker environment was cleaned after validation. Only the current project's development
-PostgreSQL container/volume/network and the Node 24, PostgreSQL 17, and Caddy 2 base images were kept.
+3. Confirm Git history contains `feat: add jobs, outbox, mail, and notifications` after `52c71d4`.
+4. If toolchain, dependency, Docker, or Stage 5 code changes, rerun the full acceptance set above.
+5. Start Stage 6 at `ObjectStoragePort`, local/Qiniu adapters, upload
+   authorization, object metadata, security limits, Settings test, and Admin media picker.
+6. Reuse a published storage package only if its public API covers the required boundary; do not copy
+   or prematurely extract application-specific code.

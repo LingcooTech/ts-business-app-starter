@@ -69,6 +69,8 @@ npx @lingcoo-tech/create-ts-business-app-starter@latest my-business-app
 
 ### 阶段 5：任务、Outbox、邮件和通知
 
+状态：已完成。
+
 - PostgreSQL Jobs；
 - 自动重试、退避、超时恢复和死信；
 - Transactional Outbox；
@@ -77,6 +79,8 @@ npx @lingcoo-tech/create-ts-business-app-starter@latest my-business-app
 - 对应 Admin 页面。
 
 ### 阶段 6：对象存储
+
+状态：下一阶段。
 
 - ObjectStoragePort；
 - 本地开发和七牛 Adapter；

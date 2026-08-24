@@ -109,6 +109,11 @@ cp deploy/production.env.example /path/to/deployment/.env
 Bootstrap；确认 Owner 可以登录后，从生产 `.env` 删除 Owner 密码。后续部署仍会同步代码中
 声明的系统权限，但不会重置既有 Owner 密码。
 
+`PUBLIC_WEB_URL` 必须填写用户可访问的 Web 根地址，用于密码重置和邮箱验证链接。生产环境
+应选择 `MAIL_TRANSPORT=smtp` 并配置 SMTP；使用默认 `log` 只会记录模拟成功。Worker 必须与
+API 使用同一数据库和加密配置，且多个 Worker 副本不要配置相同的 `JOB_WORKER_ID`。完整配置
+和失败语义见[异步基础](async-foundation.md)。
+
 ## Image tags and rollback
 
 每次发布使用两个标签：
