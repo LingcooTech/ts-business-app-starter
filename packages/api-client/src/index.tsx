@@ -17,6 +17,7 @@ import {
   type LoginRequest,
   type SessionIdentity,
 } from '@ts-business-app-starter/contracts';
+import { ApiError } from '@lingcoo-tech/http';
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { z, type ZodType } from 'zod';
 
@@ -25,16 +26,20 @@ const queryKeys = {
   permissions: ['access', 'permissions'] as const,
 };
 
-export class ApiRequestError extends Error {
+export class ApiRequestError extends ApiError {
   constructor(
     message: string,
-    public readonly status: number,
-    public readonly code: string,
+    status: number,
+    code: string,
     public readonly requestId?: string,
-    public readonly details?: unknown,
+    details?: unknown,
   ) {
-    super(message);
+    super(status, code, message, details);
     this.name = 'ApiRequestError';
+  }
+
+  get status(): number {
+    return this.statusCode;
   }
 }
 

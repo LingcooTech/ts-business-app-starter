@@ -51,6 +51,21 @@ describe('shared API contracts', () => {
     ).toEqual({
       error: { code: 'NOT_FOUND', message: 'Resource not found', requestId: 'req-1' },
     });
+    expect(() =>
+      apiErrorResponseSchema.parse({
+        error: { code: 'NOT_FOUND', message: 'Resource not found' },
+      }),
+    ).toThrow();
+    expect(() =>
+      apiErrorResponseSchema.parse({
+        error: { code: 404, message: 'Resource not found', requestId: 'req-1' },
+      }),
+    ).toThrow();
+    expect(() =>
+      apiErrorResponseSchema.parse({
+        error: { code: '', message: 'Resource not found', requestId: 'req-1' },
+      }),
+    ).toThrow();
 
     const responseSchema = createPaginatedResponseSchema(z.object({ id: z.uuid() }));
     expect(

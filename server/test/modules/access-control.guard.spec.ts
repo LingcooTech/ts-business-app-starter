@@ -70,18 +70,27 @@ describe('AccessControlGuard', () => {
   it('rejects unsafe cookie-authenticated requests without the matching CSRF header', async () => {
     const { guard, request } = guardFor({ method: 'POST' });
     request.headers['x-csrf-token'] = 'wrong-token';
-    await expect(guard.canActivate(contextFor(request))).rejects.toMatchObject({ status: 403 });
+    await expect(guard.canActivate(contextFor(request))).rejects.toMatchObject({
+      statusCode: 403,
+      code: 'CSRF_INVALID',
+    });
   });
 
   it('rejects requests that lack a required permission', async () => {
     const { guard, request } = guardFor({ required: ['roles.manage'] });
-    await expect(guard.canActivate(contextFor(request))).rejects.toMatchObject({ status: 403 });
+    await expect(guard.canActivate(contextFor(request))).rejects.toMatchObject({
+      statusCode: 403,
+      code: 'PERMISSION_DENIED',
+    });
   });
 
   it('rejects requests with no session cookies', async () => {
     const { guard, request, identity } = guardFor({});
     request.cookies = {} as typeof request.cookies;
-    await expect(guard.canActivate(contextFor(request))).rejects.toMatchObject({ status: 401 });
+    await expect(guard.canActivate(contextFor(request))).rejects.toMatchObject({
+      statusCode: 401,
+      code: 'AUTHENTICATION_REQUIRED',
+    });
     expect(identity.resolveSession).not.toHaveBeenCalled();
   });
 });

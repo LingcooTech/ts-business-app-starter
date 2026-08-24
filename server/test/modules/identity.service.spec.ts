@@ -111,7 +111,7 @@ describe('IdentityService', () => {
     repository.findCredentialByEmail.mockResolvedValue(null);
     await expect(
       service.login({ email: 'missing@example.com', password: 'incorrect' }, null),
-    ).rejects.toMatchObject({ status: 401 });
+    ).rejects.toMatchObject({ statusCode: 401, code: 'INVALID_CREDENTIALS' });
 
     repository.findCredentialByEmail.mockResolvedValue({
       user,
@@ -119,7 +119,7 @@ describe('IdentityService', () => {
     });
     await expect(
       service.login({ email: user.email, password: 'incorrect' }, null),
-    ).rejects.toMatchObject({ status: 401 });
+    ).rejects.toMatchObject({ statusCode: 401, code: 'INVALID_CREDENTIALS' });
   });
 
   it('issues digested reset tokens and never reveals them when disabled', async () => {

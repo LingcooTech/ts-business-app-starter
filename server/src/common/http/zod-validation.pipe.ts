@@ -1,4 +1,5 @@
-import { BadRequestException, type ArgumentMetadata, type PipeTransform } from '@nestjs/common';
+import type { ArgumentMetadata, PipeTransform } from '@nestjs/common';
+import { ApiError } from '@lingcoo-tech/http';
 import { z, type ZodType } from 'zod';
 
 export class ZodValidationPipe<T> implements PipeTransform<unknown, T> {
@@ -8,11 +9,12 @@ export class ZodValidationPipe<T> implements PipeTransform<unknown, T> {
     void _metadata;
     const result = this.schema.safeParse(value);
     if (!result.success) {
-      throw new BadRequestException({
-        code: 'VALIDATION_ERROR',
-        message: 'Request validation failed',
-        details: z.treeifyError(result.error),
-      });
+      throw new ApiError(
+        400,
+        'VALIDATION_ERROR',
+        'Request validation failed',
+        z.treeifyError(result.error),
+      );
     }
     return result.data;
   }

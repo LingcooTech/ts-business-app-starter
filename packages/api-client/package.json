@@ -19,6 +19,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@lingcoo-tech/http": "0.1.1",
     "@tanstack/react-query": "5.102.0",
     "@ts-business-app-starter/contracts": "workspace:*",
     "zod": "4.4.3"

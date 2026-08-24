@@ -1,7 +1,8 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ApiError } from '@lingcoo-tech/http';
 import { hashPassword, needsPasswordRehash, verifyPassword } from '@lingcoo-tech/security/password';
 import type {
   ChangePasswordRequest,
@@ -20,12 +21,9 @@ type LoginResult = {
 };
 
 const invalidCredentials = () =>
-  new UnauthorizedException({ code: 'INVALID_CREDENTIALS', message: 'Invalid email or password' });
+  new ApiError(401, 'INVALID_CREDENTIALS', 'Invalid email or password');
 const invalidActionToken = () =>
-  new BadRequestException({
-    code: 'INVALID_ACTION_TOKEN',
-    message: 'Action token is invalid or expired',
-  });
+  new ApiError(400, 'INVALID_ACTION_TOKEN', 'Action token is invalid or expired');
 
 function token(): string {
   return randomBytes(32).toString('base64url');
@@ -89,10 +87,11 @@ export class IdentityService {
       throw invalidCredentials();
     }
     if (await verifyPassword(input.newPassword, credential.passwordHash)) {
-      throw new BadRequestException({
-        code: 'PASSWORD_REUSE',
-        message: 'New password must differ from the current password',
-      });
+      throw new ApiError(
+        400,
+        'PASSWORD_REUSE',
+        'New password must differ from the current password',
+      );
     }
     await this.repository.changePasswordAndRevokeSessions(
       userId,

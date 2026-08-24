@@ -9,6 +9,7 @@ import { RequestMethod } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
+import { createApiErrorResponse } from '@lingcoo-tech/http';
 
 import { ApiErrorFilter } from './common/http/api-error.filter';
 
@@ -64,13 +65,8 @@ export async function configureHttpApplication(app: NestFastifyApplication): Pro
     ? readFileSync(resolve(webRoot, 'index.html'), 'utf8')
     : null;
   const server = app.getHttpAdapter().getInstance();
-  const notFound = (requestId: string) => ({
-    error: {
-      code: 'NOT_FOUND',
-      message: 'Resource not found',
-      requestId,
-    },
-  });
+  const notFound = (requestId: string) =>
+    createApiErrorResponse({ code: 'NOT_FOUND', message: 'Resource not found' }, requestId);
   if (adminIndex) {
     server.get('/admin', (_request, reply) => reply.redirect('/admin/'));
     server.get('/admin/*', (request, reply) => {

@@ -5,6 +5,11 @@ import {
   type ExceptionFilter,
   Logger,
 } from '@nestjs/common';
+import {
+  ApiError,
+  apiErrorResponseFromException,
+  createApiErrorResponse,
+} from '@lingcoo-tech/http';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
 type ErrorBody = { code?: string; message?: string | string[]; details?: unknown };
@@ -19,11 +24,14 @@ export class ApiErrorFilter implements ExceptionFilter {
     const reply = context.getResponse<FastifyReply>();
     const requestId = request.id;
 
+    if (exception instanceof ApiError) {
+      reply.status(exception.statusCode).send(apiErrorResponseFromException(exception, requestId));
+      return;
+    }
+
     if (!(exception instanceof HttpException)) {
       this.logger.error(exception instanceof Error ? exception.stack : exception);
-      reply.status(500).send({
-        error: { code: 'INTERNAL_SERVER_ERROR', message: 'Internal server error', requestId },
-      });
+      reply.status(500).send(apiErrorResponseFromException(exception, requestId));
       return;
     }
 
@@ -31,13 +39,15 @@ export class ApiErrorFilter implements ExceptionFilter {
     const response = exception.getResponse();
     const body: ErrorBody = typeof response === 'string' ? { message: response } : response;
     const message = Array.isArray(body.message) ? body.message.join('; ') : body.message;
-    reply.status(status).send({
-      error: {
-        code: body.code ?? `HTTP_${status}`,
-        message: message ?? exception.message,
-        ...(body.details === undefined ? {} : { details: body.details }),
+    reply.status(status).send(
+      createApiErrorResponse(
+        {
+          code: body.code ?? `HTTP_${status}`,
+          message: message ?? exception.message,
+          ...(body.details === undefined ? {} : { details: body.details }),
+        },
         requestId,
-      },
-    });
+      ),
+    );
   }
 }

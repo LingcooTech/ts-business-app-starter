@@ -1,14 +1,9 @@
 import { timingSafeEqual } from 'node:crypto';
 
-import {
-  CanActivate,
-  type ExecutionContext,
-  ForbiddenException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, type ExecutionContext, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
+import { ApiError } from '@lingcoo-tech/http';
 
 import type { AuthenticatedRequest } from '../../../common/auth/auth-context';
 import { PUBLIC_ROUTE, REQUIRED_PERMISSIONS } from '../../../common/auth/auth.decorators';
@@ -66,7 +61,7 @@ export class AccessControlGuard implements CanActivate {
       const csrfHeader = request.headers['x-csrf-token'];
       const value = Array.isArray(csrfHeader) ? csrfHeader[0] : csrfHeader;
       if (!value || !valuesMatch(value, csrfToken)) {
-        throw new ForbiddenException({ code: 'CSRF_INVALID', message: 'CSRF token is invalid' });
+        throw new ApiError(403, 'CSRF_INVALID', 'CSRF token is invalid');
       }
     }
 
@@ -76,19 +71,12 @@ export class AccessControlGuard implements CanActivate {
     ]);
     const missing = required?.filter((permission) => !permissions.has(permission)) ?? [];
     if (missing.length > 0) {
-      throw new ForbiddenException({
-        code: 'PERMISSION_DENIED',
-        message: 'Required permission is missing',
-        details: { missing },
-      });
+      throw new ApiError(403, 'PERMISSION_DENIED', 'Required permission is missing', { missing });
     }
     return true;
   }
 
-  private unauthenticated(): UnauthorizedException {
-    return new UnauthorizedException({
-      code: 'AUTHENTICATION_REQUIRED',
-      message: 'Authentication is required',
-    });
+  private unauthenticated(): ApiError {
+    return new ApiError(401, 'AUTHENTICATION_REQUIRED', 'Authentication is required');
   }
 }

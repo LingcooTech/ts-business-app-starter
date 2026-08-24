@@ -68,5 +68,12 @@ Business Starter 当前提供四个只随应用源码演进的私有 workspace�
 - 可以在独立 package 中测试和版本化；
 - 被第二个应用实际消费后仍然没有明显定制分支。
 
-当前阶段不新增跨仓库公共 package。Identity 已真实消费 `@lingcoo-tech/security` 的密码
-哈希能力，NestJS 会话和权限编排保留在 Business Starter。下一阶段实现 Settings 与 Audit。
+当前阶段不新增跨仓库公共 package。实际采用情况：
+
+- Identity 消费 `@lingcoo-tech/security` 的密码哈希能力；
+- 服务端使用 `@lingcoo-tech/http` 的 `ApiError`、异常转换和响应构造；
+- Contracts 组合 `@lingcoo-tech/http` 的响应守卫，并额外强制 Business API 的 request ID；
+- API Client 通过继承公共 `ApiError` 只补充客户端 request ID，不重复定义状态码、错误码和详情；
+- Nest/Fastify 异常适配、Cookie 会话和权限编排继续保留在 Business Starter。
+
+`@lingcoo-tech/crypto` 和 `@lingcoo-tech/mailer` 等到 Settings、Mail 模块实际落地时接入，不提前增加空依赖。

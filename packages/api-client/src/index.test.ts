@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { ApiError } from '@lingcoo-tech/http';
 
 import { ApiClient } from './index.js';
 
@@ -66,8 +67,33 @@ describe('ApiClient', () => {
         401,
       ),
     );
+    const error = await new ApiClient({ fetch: fetcher })
+      .login({ email: 'a@b.com', password: 'x' })
+      .catch((reason: unknown) => reason);
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toEqual(
+      expect.objectContaining({
+        code: 'INVALID_CREDENTIALS',
+        requestId: 'req-2',
+        statusCode: 401,
+      }),
+    );
+  });
+
+  it('rejects error envelopes that omit the application request ID', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      response(
+        {
+          error: {
+            code: 'INVALID_CREDENTIALS',
+            message: 'Missing trace context',
+          },
+        },
+        401,
+      ),
+    );
     await expect(
       new ApiClient({ fetch: fetcher }).login({ email: 'a@b.com', password: 'x' }),
-    ).rejects.toEqual(expect.objectContaining({ code: 'INVALID_CREDENTIALS', requestId: 'req-2' }));
+    ).rejects.toEqual(expect.objectContaining({ code: 'HTTP_ERROR', statusCode: 401 }));
   });
 });
