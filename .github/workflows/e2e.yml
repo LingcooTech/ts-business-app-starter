@@ -1,0 +1,67 @@
+name: Browser E2E
+
+on:
+  pull_request:
+    paths:
+      - 'admin/**'
+      - 'server/**'
+      - 'packages/**'
+      - 'e2e/**'
+      - 'playwright.config.mjs'
+      - 'docker-compose.prod.yml'
+      - 'Dockerfile'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      COMPOSE_PROJECT_NAME: ts-business-app-e2e
+      APP_IMAGE: ts-business-app-starter:e2e
+      APP_NAME: ts-business-app-e2e
+      APP_VERSION: e2e
+      CORS_ORIGIN: http://localhost:18093
+      PUBLIC_WEB_URL: http://localhost:18093
+      DATABASE_URL: postgres://app:app_password@postgres:5432/app
+      API_DOCS_ENABLED: 'false'
+      AUTH_COOKIE_SECURE: 'false'
+      AUTH_COOKIE_NAME: app_session
+      AUTH_CSRF_COOKIE_NAME: app_csrf
+      SETTINGS_ENCRYPTION_CURRENT_KEY_ID: e2e-v1
+      SETTINGS_ENCRYPTION_KEYS: '{"e2e-v1":"e2e-settings-encryption-key-123456789"}'
+      MAIL_TRANSPORT: log
+      STORAGE_PROVIDER: local
+      PAYMENT_PROVIDER: mock
+      PAYMENT_NOTIFY_BASE_URL: http://localhost:18093
+      BOOTSTRAP_OWNER_EMAIL: owner@example.com
+      BOOTSTRAP_OWNER_PASSWORD: e2e-owner-password-123
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app_password
+      HTTP_PORT: '18093'
+      CADDY_SITE_ADDRESS: ':80'
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896644e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+      - run: corepack enable
+      - run: corepack pnpm install --frozen-lockfile
+      - run: corepack pnpm exec playwright install --with-deps chromium
+      - run: docker build --tag "$APP_IMAGE" .
+      - run: docker compose -f docker-compose.prod.yml -f docker-compose.e2e.yml up -d postgres
+      - run: docker compose -f docker-compose.prod.yml -f docker-compose.e2e.yml run --rm --no-deps api node server/dist/migrate.js
+      - run: docker compose -f docker-compose.prod.yml -f docker-compose.e2e.yml run --rm --no-deps api node server/dist/bootstrap.js
+      - run: docker compose -f docker-compose.prod.yml -f docker-compose.e2e.yml up -d --wait api worker caddy
+      - run: E2E_BASE_URL=http://127.0.0.1:18093 E2E_OWNER_EMAIL="$BOOTSTRAP_OWNER_EMAIL" E2E_OWNER_PASSWORD="$BOOTSTRAP_OWNER_PASSWORD" corepack pnpm e2e
+      - if: always()
+        run: docker compose -f docker-compose.prod.yml -f docker-compose.e2e.yml logs --no-color --tail=200 api worker caddy
+      - if: always()
+        run: docker compose -f docker-compose.prod.yml -f docker-compose.e2e.yml down --volumes --remove-orphans

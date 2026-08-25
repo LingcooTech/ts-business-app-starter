@@ -3,8 +3,8 @@
 import { execFileSync } from 'node:child_process';
 import { createWriteStream, existsSync } from 'node:fs';
 import { cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { basename, join, resolve } from 'node:path';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
+import { basename, isAbsolute, join, relative, resolve } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
@@ -41,6 +41,7 @@ Options:
   --package-manager <name>  pnpm, npm, yarn, or bun (default: pnpm)
   --skip-install            Do not install dependencies
   --no-git                  Do not initialize a Git repository
+  --force                   Replace an existing target directory
   --ref <branch-or-tag>     Template branch or tag (default: main)
   --template-path <path>    Use a local template directory (maintainer smoke tests)
   --help                    Show this help
@@ -55,6 +56,7 @@ function parseArgs(args) {
     templatePath: undefined,
     git: true,
     install: true,
+    force: false,
   };
   let directory;
   for (let index = 0; index < args.length; index += 1) {
@@ -66,6 +68,10 @@ function parseArgs(args) {
     }
     if (arg === '--no-git') {
       options.git = false;
+      continue;
+    }
+    if (arg === '--force') {
+      options.force = true;
       continue;
     }
     if (
@@ -145,6 +151,21 @@ async function downloadTemplate(workdir, ref) {
 async function resolveTemplate(workdir, options) {
   if (options.templatePath) return resolve(options.templatePath);
   return downloadTemplate(workdir, options.ref);
+}
+
+function pathsOverlap(left, right) {
+  const difference = relative(left, right);
+  return difference === '' || (!difference.startsWith('..') && !isAbsolute(difference));
+}
+
+function assertSafeReplacement(target, source) {
+  const protectedTargets = new Set([resolve('/'), resolve(homedir()), resolve(process.cwd())]);
+  if (protectedTargets.has(target)) {
+    throw new Error(`Refusing to replace protected directory: ${target}`);
+  }
+  if (pathsOverlap(target, source) || pathsOverlap(source, target)) {
+    throw new Error('Target directory and template source must not overlap when using --force');
+  }
 }
 
 async function copyTemplate(source, target) {
@@ -227,12 +248,16 @@ async function main() {
     return;
   }
   const target = resolve(parsed.directory);
-  if (existsSync(target) && (await readdir(target)).length > 0)
+  if (existsSync(target) && (await readdir(target)).length > 0 && !parsed.options.force)
     throw new Error(`Target directory is not empty: ${target}`);
   const workdir = await mkdtemp(join(tmpdir(), 'create-ts-business-app-starter-'));
   try {
     console.log(`Creating a TypeScript application in ${target}`);
     const source = await resolveTemplate(workdir, parsed.options);
+    if (parsed.options.force) {
+      assertSafeReplacement(target, source);
+      await rm(target, { recursive: true, force: true });
+    }
     await copyTemplate(source, target);
     await transformFiles(target, basename(target));
     await removeMaintainerOnlyFiles(target);
@@ -259,7 +284,14 @@ async function main() {
   }
 }
 
-export { copyTemplate, main, parseArgs, removeMaintainerOnlyFiles, transformFiles };
+export {
+  assertSafeReplacement,
+  copyTemplate,
+  main,
+  parseArgs,
+  removeMaintainerOnlyFiles,
+  transformFiles,
+};
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().catch((error) => {

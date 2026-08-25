@@ -9,9 +9,9 @@ completed stages from zero unless a recorded check fails or Git history no longe
 
 ## Current conclusion
 
-Stages 0 through 7 are implemented. Stage 7 delivers provider-neutral Payments with mature Alipay
-and WeChat dependencies, payment/refund ledgers, callback security, idempotency, compensation Jobs,
-Transactional Outbox events, encrypted Settings, API Client support, and `/admin/payments`.
+Stages 0 through 8 are implemented. Stage 8 completes product delivery with the hardened creation
+CLI, Playwright browser acceptance, independent generated-project verification, npm release-package
+smoke, CI browser workflow, and deployment/upgrade/rollback guidance.
 
 Stage 6 is committed and pushed at `e44a92b` (`feat: add multi-provider object storage`). Stage 7 is
 delivered by the subsequent `feat: add provider-neutral payments` change.
@@ -26,11 +26,11 @@ delivered by the subsequent `feat: add provider-neutral payments` change.
 | 5     | Jobs, Outbox, Mail, and Notifications       | Complete |
 | 6     | Object Storage                              | Complete |
 | 7     | Payments                                    | Complete |
-| 8     | Product delivery and generator              | Next     |
+| 8     | Product delivery and generator              | Complete |
 
-Progress is **8 of 9 stages (88.9%)** by stage count. The workload-weighted estimate is
-approximately **86%**. The remaining work is concentrated in generator/product delivery hardening,
-full browser E2E, release packaging, and upgrade verification.
+Progress is **9 of 9 stages (100%)**. The reusable business application starter implementation is
+complete; future work is release publishing, provider sandbox acceptance with deployment-owned
+credentials, and product-specific modules outside this generic starter.
 
 The original Desktop implementation plan numbers Object Storage as Stage 5 and Payments as Stage 6.
 The repository plan includes an earlier frontend-foundation stage, so the same slices are numbered
@@ -137,20 +137,40 @@ constraint, checked `/admin/payments`, and removed all containers, networks, and
   consumer.
 - Provider callbacks are only trustworthy when the reverse proxy preserves exact body bytes and
   required signature headers.
-- The Admin payment page is an operational foundation; Stage 8 performs the final browser UX/E2E and
-  generated-project product pass.
+- The Admin payment page is an operational foundation; Stage 8 now verifies it through browser E2E.
 
-## Stage 8 next tasks
+## Stage 8 delivered scope
 
-1. Harden the creation CLI's substitutions, package identity, environment templates, and migration
-   bootstrap for the complete Stage 7 feature set.
-2. Add Playwright browser E2E for login, permissions, Settings, Jobs, Storage, and Payments management.
-3. Verify generated projects install, migrate twice, bootstrap an Owner, run API and Worker, and
-   build Admin/Web without referencing the source repository.
-4. Exercise release tarballs and `npx @lingcoo-tech/create-ts-business-app-starter@latest` from a clean
-   environment.
-5. Finalize deployment, upgrade, rollback, and provider credential rotation documentation.
-6. Run the full CI/Docker/CLI acceptance matrix and publish the product delivery conclusion.
+- The CLI protects non-empty targets, requires explicit `--force`, rejects protected/overlapping
+  replacement paths, preserves package-manager selection, and removes maintainer-only files.
+- `@playwright/test@1.62.1` provides browser E2E for Owner login, Stage 8 operational navigation,
+  and a visible Mock payment success flow.
+- `.github/workflows/e2e.yml` builds the production image, migrates and bootstraps PostgreSQL, starts
+  API/Worker/Caddy, installs Chromium, and runs the browser suite.
+- `smoke:cli-release` validates npm package contents, the executable entry, target safety, forced
+  replacement, standalone package identity, and maintainer-file removal.
+- `smoke:generated` installs an independent generated project and repeats formatting, Lint, type
+  checking, all 67 workspace tests, and production builds.
+- [`product-delivery.md`](./product-delivery.md) records first boot, release gates, deployment,
+  upgrade, rollback, and credential rotation procedures.
+
+## Stage 8 acceptance evidence
+
+The final Stage 8 acceptance set passed on 2026-08-25:
+
+```bash
+corepack pnpm check
+corepack pnpm smoke:cli-release
+corepack pnpm smoke:module-generator
+corepack pnpm smoke:generated
+corepack pnpm smoke:docker
+E2E_BASE_URL=http://127.0.0.1:18193 corepack pnpm e2e
+git diff --check
+```
+
+Playwright passed both browser tests. The production Docker smoke rebuilt the runtime image, migrated
+and bootstrapped twice, ran one API and two Workers, verified every Admin/Web route and the complete
+Stage 2-7 smoke, then removed all smoke containers, volumes, networks, and images.
 
 ## Resume protocol
 
@@ -158,7 +178,7 @@ constraint, checked `/admin/payments`, and removed all containers, networks, and
    `payments-acceptance.md`.
 2. Run `git status --short` and `git log -5 --oneline`.
 3. Confirm Git history contains `feat: add provider-neutral payments` after `e44a92b`.
-4. If toolchain, dependency, Docker, payment, storage, or generator code changes, rerun the full
-   acceptance set above.
-5. Start Stage 8 from generator substitution/packaging and Playwright browser coverage; do not reopen
-   Payments unless a recorded acceptance fails.
+4. If toolchain, dependency, Docker, payment, storage, generator, or browser coverage changes, rerun
+   the full Stage 8 acceptance set above.
+5. Do not reopen completed generic modules unless a recorded acceptance fails; new work should be a
+   published release, an upgrade of pinned dependencies, or a product-specific module.

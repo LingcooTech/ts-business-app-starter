@@ -99,7 +99,7 @@ npx @lingcoo-tech/create-ts-business-app-starter@latest my-business-app
 
 ### 阶段 8：产品化交付
 
-状态：下一阶段。
+状态：已完成。
 
 - 创建 CLI；
 - 包名和环境变量替换；

@@ -1,0 +1,15 @@
+services:
+  api:
+    environment:
+      NODE_ENV: development
+      AUTH_COOKIE_SECURE: 'false'
+      AUTH_COOKIE_NAME: app_session
+      AUTH_CSRF_COOKIE_NAME: app_csrf
+      PAYMENT_PROVIDER: mock
+  worker:
+    environment:
+      NODE_ENV: development
+      AUTH_COOKIE_SECURE: 'false'
+      AUTH_COOKIE_NAME: app_session
+      AUTH_CSRF_COOKIE_NAME: app_csrf
+      PAYMENT_PROVIDER: mock
