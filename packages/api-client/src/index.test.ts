@@ -96,4 +96,50 @@ describe('ApiClient', () => {
       new ApiClient({ fetch: fetcher }).login({ email: 'a@b.com', password: 'x' }),
     ).rejects.toEqual(expect.objectContaining({ code: 'HTTP_ERROR', statusCode: 401 }));
   });
+
+  it('uploads local storage files with the authenticated multipart flow', async () => {
+    const object = {
+      id: '9f2148c5-7ddb-4b17-85f7-700eab5ba697',
+      provider: 'local',
+      bucket: 'local',
+      key: 'media/2026/08/object.txt',
+      originalName: 'object.txt',
+      contentType: 'text/plain',
+      sizeBytes: 5,
+      visibility: 'private',
+      status: 'ready',
+      etag: 'etag',
+      createdBy: identity.user.id,
+      uploadedAt: '2026-08-25T01:00:00Z',
+      deletedAt: null,
+      createdAt: '2026-08-25T01:00:00Z',
+      updatedAt: '2026-08-25T01:00:00Z',
+    };
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(response(identity))
+      .mockResolvedValueOnce(
+        response({
+          object: { ...object, status: 'pending', uploadedAt: null, etag: null },
+          upload: {
+            method: 'POST',
+            url: '/api/storage/uploads/9f2148c5-7ddb-4b17-85f7-700eab5ba697/content',
+            headers: { accept: 'application/json' },
+            expiresAt: '2026-08-25T01:15:00Z',
+          },
+        }),
+      )
+      .mockResolvedValueOnce(response({ object }));
+    const client = new ApiClient({ fetch: fetcher });
+    await client.login({ email: 'owner@example.com', password: 'password' });
+    const uploaded = await client.uploadStorageObject(
+      new File(['hello'], 'object.txt', { type: 'text/plain' }),
+      { prefix: 'media', visibility: 'private' },
+    );
+
+    expect(uploaded.status).toBe('ready');
+    const uploadRequest = fetcher.mock.calls[2]?.[1];
+    expect(uploadRequest?.body).toBeInstanceOf(FormData);
+    expect(new Headers(uploadRequest?.headers).get('x-csrf-token')).toBe(identity.csrfToken);
+  });
 });

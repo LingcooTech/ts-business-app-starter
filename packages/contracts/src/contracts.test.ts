@@ -13,6 +13,7 @@ import {
   paginationQuerySchema,
   permissionKeySchema,
   settingViewSchema,
+  createStorageUploadRequestSchema,
 } from './index.js';
 
 describe('shared API contracts', () => {
@@ -157,5 +158,23 @@ describe('shared API contracts', () => {
         meta: { page: 1, pageSize: 20, total: 0, totalPages: 0 },
       }).items,
     ).toEqual([]);
+  });
+
+  it('validates safe object-storage upload requests', () => {
+    expect(
+      createStorageUploadRequestSchema.parse({
+        filename: 'photo.png',
+        contentType: 'image/png',
+        sizeBytes: 1024,
+      }),
+    ).toMatchObject({ prefix: 'media', visibility: 'private' });
+    expect(() =>
+      createStorageUploadRequestSchema.parse({
+        filename: 'photo.png',
+        contentType: 'image/png',
+        sizeBytes: 1024,
+        prefix: '../escape',
+      }),
+    ).toThrow();
   });
 });

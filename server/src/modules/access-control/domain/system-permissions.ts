@@ -12,6 +12,8 @@ export const SYSTEM_PERMISSIONS = [
   { key: 'payments.read', description: 'View provider-level payment records' },
   { key: 'payments.manage', description: 'Manage provider-level payment operations' },
   { key: 'notifications.manage', description: 'Manage notification delivery' },
+  { key: 'storage.read', description: 'View stored objects and access URLs' },
+  { key: 'storage.manage', description: 'Upload and delete stored objects' },
 ] as const;
 
 export type SystemPermission = (typeof SYSTEM_PERMISSIONS)[number]['key'];

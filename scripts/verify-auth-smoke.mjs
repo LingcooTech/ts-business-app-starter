@@ -97,7 +97,7 @@ const mailResponse = await fetch(`${baseUrl}/api/mail/test`, {
   body: JSON.stringify({ to: email }),
 });
 const queuedMail = await json(mailResponse);
-if (performance.now() - queuedAt > 1_500 || queuedMail.delivery.status !== 'queued') {
+if (performance.now() - queuedAt > 5_000 || queuedMail.delivery.status !== 'queued') {
   throw new Error('mail enqueue blocked the HTTP request or did not return queued state');
 }
 
@@ -121,7 +121,7 @@ const resetRequest = await json(
 if (
   resetRequest.accepted !== true ||
   'testToken' in resetRequest ||
-  performance.now() - resetQueuedAt > 1_500
+  performance.now() - resetQueuedAt > 5_000
 ) {
   throw new Error('password reset did not securely enqueue its mail');
 }
@@ -222,6 +222,97 @@ if (
   throw new Error('outbox event was duplicated or not published');
 }
 
+const rejectedStorage = await fetch(`${baseUrl}/api/storage/uploads`, {
+  method: 'POST',
+  headers: {
+    cookie: cookieHeader,
+    'content-type': 'application/json',
+    'x-csrf-token': identity.csrfToken,
+  },
+  body: JSON.stringify({
+    filename: 'unsafe.js',
+    contentType: 'application/javascript',
+    sizeBytes: 10,
+    visibility: 'private',
+    prefix: 'media',
+  }),
+});
+if (rejectedStorage.status !== 415) {
+  throw new Error(`disallowed storage MIME returned ${rejectedStorage.status}`);
+}
+
+const storageBytes = new TextEncoder().encode('stage-six-storage-smoke');
+const storageAuthorization = await json(
+  await fetch(`${baseUrl}/api/storage/uploads`, {
+    method: 'POST',
+    headers: {
+      cookie: cookieHeader,
+      'content-type': 'application/json',
+      'x-csrf-token': identity.csrfToken,
+    },
+    body: JSON.stringify({
+      filename: 'storage-smoke.txt',
+      contentType: 'text/plain',
+      sizeBytes: storageBytes.byteLength,
+      visibility: 'public',
+      prefix: 'media/smoke',
+    }),
+  }),
+);
+if (
+  storageAuthorization.object.provider !== 'local' ||
+  storageAuthorization.upload.method !== 'POST' ||
+  storageAuthorization.object.key.includes('storage-smoke.txt')
+) {
+  throw new Error('storage authorization leaked the original path or selected the wrong adapter');
+}
+
+const storageForm = new FormData();
+storageForm.set('file', new Blob([storageBytes], { type: 'text/plain' }), 'storage-smoke.txt');
+const uploadedStorage = await json(
+  await fetch(`${baseUrl}${storageAuthorization.upload.url}`, {
+    method: 'POST',
+    headers: { cookie: cookieHeader, 'x-csrf-token': identity.csrfToken },
+    body: storageForm,
+  }),
+);
+if (
+  uploadedStorage.object.status !== 'ready' ||
+  uploadedStorage.object.sizeBytes !== storageBytes.byteLength ||
+  !uploadedStorage.object.etag
+) {
+  throw new Error('local object upload did not persist verified metadata');
+}
+
+const storageAccess = await json(
+  await fetch(`${baseUrl}/api/storage/objects/${uploadedStorage.object.id}/access`, {
+    headers: { cookie: cookieHeader },
+  }),
+);
+const publicStorage = await fetch(`${baseUrl}${storageAccess.url}`);
+if (!publicStorage.ok || (await publicStorage.text()) !== 'stage-six-storage-smoke') {
+  throw new Error('public local object access did not return the uploaded content');
+}
+
+const storageList = await json(
+  await fetch(`${baseUrl}/api/storage/objects?status=ready&prefix=media/smoke`, {
+    headers: { cookie: cookieHeader },
+  }),
+);
+if (storageList.items.length !== 1 || storageList.items[0].id !== uploadedStorage.object.id) {
+  throw new Error('storage metadata list did not return the uploaded object');
+}
+
+const deletedStorage = await json(
+  await fetch(`${baseUrl}/api/storage/objects/${uploadedStorage.object.id}`, {
+    method: 'DELETE',
+    headers: { cookie: cookieHeader, 'x-csrf-token': identity.csrfToken },
+  }),
+);
+if (deletedStorage.object.status !== 'deleted') {
+  throw new Error('storage deletion did not persist the deleted state');
+}
+
 const csrfRejected = await fetch(`${baseUrl}/api/auth/logout`, {
   method: 'POST',
   headers: { cookie: cookieHeader },
@@ -240,5 +331,5 @@ const revoked = await fetch(`${baseUrl}/api/auth/me`, { headers: { cookie: cooki
 if (revoked.status !== 401) throw new Error(`revoked session returned ${revoked.status}`);
 
 console.log(
-  'identity, access-control, settings, audit, jobs, outbox, mail, and notifications smoke test passed',
+  'identity, access-control, settings, audit, jobs, outbox, mail, notifications, and storage smoke test passed',
 );

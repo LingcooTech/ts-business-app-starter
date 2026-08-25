@@ -13,10 +13,11 @@ See [Identity and Access Control](docs/identity-access.md) for sessions, CSRF, p
 See [前端应用基础](docs/frontend-foundation.md) for frontend workspace, routing, session, and extension boundaries.
 See [Settings and Audit](docs/settings-audit.md) for encryption, key rotation, and immutable audit events.
 See [Jobs, Transactional Outbox, Mail, and Notifications](docs/async-foundation.md) for the asynchronous runtime.
+See [Object Storage](docs/object-storage.md) for upload authorization, security policy, and provider configuration.
 
-> Current status: phase 5. The independent baseline, Contracts, Identity, Access Control, shared
-> UI, API Client, Admin/Web application shells, Settings, Audit, Jobs, Outbox, Mail, and Notifications
-> are delivered. Object storage is next.
+> Current status: repository phase 6 is complete. The independent baseline, Contracts, Identity,
+> Access Control, shared UI, API Client, Admin/Web application shells, Settings, Audit, Jobs, Outbox,
+> Mail, Notifications, and multi-provider object storage are delivered. Payments are next.
 
 ## 1. Positioning
 

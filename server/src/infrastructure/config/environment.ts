@@ -81,6 +81,28 @@ export const environmentSchema = z
     JOB_HEARTBEAT_INTERVAL_MS: z.coerce.number().int().min(1_000).max(30_000).default(10_000),
     JOB_BACKOFF_BASE_MS: z.coerce.number().int().min(50).max(86_400_000).default(1_000),
     JOB_BACKOFF_MAX_MS: z.coerce.number().int().min(100).max(604_800_000).default(300_000),
+    STORAGE_PROVIDER: z.enum(['local', 's3']).default('local'),
+    STORAGE_LOCAL_ROOT: z.string().trim().min(1).default('.data/storage'),
+    STORAGE_MAX_UPLOAD_BYTES: z.coerce
+      .number()
+      .int()
+      .min(1_024)
+      .max(5_000_000_000)
+      .default(25_000_000),
+    STORAGE_UPLOAD_EXPIRY_SECONDS: z.coerce.number().int().min(30).max(3_600).default(900),
+    STORAGE_ACCESS_EXPIRY_SECONDS: z.coerce.number().int().min(30).max(86_400).default(900),
+    STORAGE_ALLOWED_MIME_TYPES: z.string().default('image/*,application/pdf,text/plain'),
+    STORAGE_ALLOWED_PREFIXES: z.string().default('media,documents,avatars'),
+    STORAGE_S3_REGION: z.string().trim().min(1).default('us-east-1'),
+    STORAGE_S3_ENDPOINT: optionalEnvironmentValue(z.string().trim().url().max(1000)),
+    STORAGE_S3_BUCKET: optionalEnvironmentValue(z.string().trim().min(1).max(255)),
+    STORAGE_S3_ACCESS_KEY: optionalEnvironmentValue(z.string().min(1).max(1000)),
+    STORAGE_S3_SECRET_KEY: optionalEnvironmentValue(z.string().min(1).max(2000)),
+    STORAGE_S3_FORCE_PATH_STYLE: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((value) => value === 'true'),
+    STORAGE_PUBLIC_BASE_URL: optionalEnvironmentValue(z.string().trim().url().max(1000)),
     BOOTSTRAP_OWNER_EMAIL: z.string().trim().optional(),
     BOOTSTRAP_OWNER_PASSWORD: z.string().optional(),
   })
@@ -132,6 +154,20 @@ export const environmentSchema = z
         code: 'custom',
         path: ['JOB_BACKOFF_BASE_MS'],
         message: 'must not exceed JOB_BACKOFF_MAX_MS',
+      });
+    }
+    if (value.STORAGE_PROVIDER === 's3' && !value.STORAGE_S3_BUCKET) {
+      context.addIssue({
+        code: 'custom',
+        path: ['STORAGE_S3_BUCKET'],
+        message: 'must be configured when STORAGE_PROVIDER is s3',
+      });
+    }
+    if (Boolean(value.STORAGE_S3_ACCESS_KEY) !== Boolean(value.STORAGE_S3_SECRET_KEY)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['STORAGE_S3_ACCESS_KEY'],
+        message: 'access key and secret key must be provided together',
       });
     }
     if (

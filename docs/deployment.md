@@ -114,6 +114,12 @@ Bootstrap；确认 Owner 可以登录后，从生产 `.env` 删除 Owner 密码�
 API 使用同一数据库和加密配置，且多个 Worker 副本不要配置相同的 `JOB_WORKER_ID`。完整配置
 和失败语义见[异步基础](async-foundation.md)。
 
+对象存储默认使用 `STORAGE_PROVIDER=local`，并由 Compose 将 `storage_data` 挂载到
+`/app/storage`。这种模式只适合单 API 主机。需要多副本、跨主机或云存储时，应切换为 `s3`，
+配置 Region、Bucket、可选 Endpoint、凭据与 Path-style 模式；凭据应放在生产 Secret 或通过
+Settings 加密保存。公共 Bucket/CDN 才配置 `STORAGE_PUBLIC_BASE_URL`，否则系统返回短期签名
+访问 URL。完整配置、安全限制和 Provider 边界见[对象存储](object-storage.md)。
+
 ## Image tags and rollback
 
 每次发布使用两个标签：

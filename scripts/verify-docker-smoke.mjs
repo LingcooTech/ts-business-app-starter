@@ -118,6 +118,7 @@ try {
     '/admin/jobs',
     '/admin/mail',
     '/admin/notifications',
+    '/admin/storage',
   ]) {
     execFileSync(
       'curl',
@@ -158,6 +159,22 @@ try {
   ]);
   if (stageFiveState !== 'dead:2,dead:1,2,1,1') {
     throw new Error(`stage 5 worker invariants failed: ${stageFiveState}`);
+  }
+
+  const storageState = composeCapture([
+    'exec',
+    '-T',
+    'postgres',
+    'psql',
+    '-U',
+    'app',
+    '-d',
+    'app',
+    '-tAc',
+    "select (select count(*) from storage_objects where original_name = 'storage-smoke.txt' and provider = 'local' and status = 'deleted' and size_bytes = 23 and etag is not null) || ',' || (select count(*) from audit_logs where resource_type = 'storage_object' and action in ('storage.upload_authorized', 'storage.object_ready', 'storage.object_deleted'))",
+  ]);
+  if (storageState !== '1,3') {
+    throw new Error(`stage 6 storage invariants failed: ${storageState}`);
   }
 
   let immutable = false;

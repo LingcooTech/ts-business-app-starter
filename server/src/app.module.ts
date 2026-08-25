@@ -12,6 +12,7 @@ import { JobsModule } from './modules/jobs/public';
 import { MailModule } from './modules/mail/public';
 import { NotificationsModule } from './modules/notifications/public';
 import { OutboxModule } from './modules/outbox/public';
+import { StorageModule } from './modules/storage/public';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { OutboxModule } from './modules/outbox/public';
     OutboxModule,
     MailModule,
     NotificationsModule,
+    StorageModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: FastifyThrottlerGuard }],
 })

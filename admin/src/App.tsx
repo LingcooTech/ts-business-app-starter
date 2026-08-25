@@ -10,6 +10,7 @@ import { ForgotPasswordPage, LoginPage } from './features/auth/pages';
 import { DashboardPage } from './features/dashboard/page';
 import { FoundationPage } from './features/foundation/page';
 import { SettingsPage } from './features/settings/page';
+import { StoragePage } from './features/storage/page';
 import { JobsPage } from './features/jobs/page';
 import { MailPage } from './features/mail/page';
 import { NotificationsPage } from './features/notifications/page';
@@ -37,6 +38,9 @@ export function App() {
           </Route>
           <Route element={<RequirePermission permission="integrations.manage" />}>
             <Route path="mail" element={<MailPage />} />
+          </Route>
+          <Route element={<RequirePermission permission="storage.read" />}>
+            <Route path="storage" element={<StoragePage />} />
           </Route>
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="foundation" element={<FoundationPage />} />

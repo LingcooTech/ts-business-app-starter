@@ -36,6 +36,7 @@ ENV API_PORT=8090
 
 WORKDIR /app
 RUN addgroup -S app && adduser -S app -G app
+RUN mkdir -p /app/storage && chown app:app /app/storage
 
 COPY --from=build --chown=app:app /prod/server ./server
 COPY --from=build --chown=app:app /app/admin/dist ./admin/dist

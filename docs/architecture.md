@@ -68,7 +68,7 @@ Business Starter 提供或计划提供以下非行业化模块：
 - jobs 与 transactional outbox（已交付）；
 - notifications（已交付）；
 - mail（已交付）；
-- storage；
+- storage（已交付）；
 - payments。
 
 这些模块不拥有教育、零售、订阅授权或其他行业数据模型。
@@ -88,6 +88,11 @@ Transactional Outbox 要求调用方传入业务事务，保证业务记录与�
 完成。Notifications 以收件人与 Dedupe Key 的数据库唯一约束抵抗事件重放。详细运行约束见
 [异步基础](async-foundation.md)。
 
+Storage 通过应用自有的 `ObjectStoragePort` 隔离 Provider。`local` Adapter 面向开发和单机部署，
+`s3` Adapter 使用官方 AWS SDK v3 连接 AWS S3 或可配置的 S3-compatible Endpoint。Controller、
+Contracts 和 Admin 不接触 Provider 凭据或签名协议；上传完成前必须经过大小与 MIME 元数据复核，
+对象元数据和审计记录保存在 PostgreSQL。详细边界见[对象存储](object-storage.md)。
+
 ## Runtime topology
 
 生产 Compose 拓扑包含四个服务：
@@ -102,6 +107,9 @@ postgres ────────┐
 - `api`：NestJS + Fastify HTTP 服务；
 - `worker`：NestJS standalone application context；
 - `caddy`：反向代理和安全响应头。
+
+使用本地存储时，API 额外挂载持久化 `storage_data` 卷到 `/app/storage`。多 API 副本部署不应
+共享本地目录假设，而应切换到 S3-compatible Provider。
 
 API 和 Worker 依赖 PostgreSQL 健康状态。发布脚本在迁移前显式等待数据库 ready，避免容器已经启动但数据库仍拒绝连接。
 

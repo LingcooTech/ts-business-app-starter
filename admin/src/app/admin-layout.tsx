@@ -9,6 +9,7 @@ const navigation = [
   { to: '/audit', label: '审计日志', mark: '≡', permission: 'audit.read' },
   { to: '/jobs', label: '后台任务', mark: '↻', permission: 'jobs.read' },
   { to: '/mail', label: '邮件投递', mark: '✉', permission: 'integrations.manage' },
+  { to: '/storage', label: '媒体存储', mark: '▣', permission: 'storage.read' },
   { to: '/notifications', label: '通知中心', mark: '●' },
   { to: '/foundation', label: '基础能力', mark: '▦' },
   { to: '/ui', label: 'UI 组件', mark: '◫' },

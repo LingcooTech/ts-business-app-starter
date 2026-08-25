@@ -80,14 +80,16 @@ npx @lingcoo-tech/create-ts-business-app-starter@latest my-business-app
 
 ### 阶段 6：对象存储
 
-状态：下一阶段。
+状态：已完成。
 
 - ObjectStoragePort；
-- 本地开发和七牛 Adapter；
+- 本地开发和通用 S3-compatible Adapter（含七牛兼容端点）；
 - 上传授权、安全限制和对象元数据；
 - 配置测试和媒体选择器。
 
 ### 阶段 7：支付
+
+状态：下一阶段。
 
 - Payment Provider Port；
 - Mock、支付宝和微信支付 API v3 Adapter；

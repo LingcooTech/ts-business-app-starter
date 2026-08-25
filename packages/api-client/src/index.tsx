@@ -13,6 +13,7 @@ import {
   apiErrorResponseSchema,
   currentPermissionsSchema,
   createAnnouncementRequestSchema,
+  createStorageUploadRequestSchema,
   jobDetailSchema,
   jobListResponseSchema,
   jobQuerySchema,
@@ -33,9 +34,15 @@ import {
   settingViewSchema,
   settingsListResponseSchema,
   sessionIdentitySchema,
+  storageAccessResponseSchema,
+  storageObjectListResponseSchema,
+  storageObjectQuerySchema,
+  storageObjectResponseSchema,
+  storageUploadAuthorizationSchema,
   type AuditQuery,
   type AuditLog,
   type CreateAnnouncementRequest,
+  type CreateStorageUploadRequest,
   type ClearSettingRequest,
   type ChangePasswordRequest,
   type ConfirmPasswordReset,
@@ -55,10 +62,14 @@ import {
   type SettingTestResponse,
   type SettingView,
   type SessionIdentity,
+  type StorageObject,
+  type StorageObjectQuery,
 } from '@ts-business-app-starter/contracts';
 import { ApiError } from '@lingcoo-tech/http';
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { z, type ZodType } from 'zod';
+
+export type { StorageObject, StorageVisibility } from '@ts-business-app-starter/contracts';
 
 const queryKeys = {
   session: ['identity', 'session'] as const,
@@ -70,6 +81,7 @@ const queryKeys = {
   mail: (query: MailDeliveryQuery) => ['mail', query] as const,
   notifications: (query: NotificationQuery) => ['notifications', query] as const,
   unreadNotifications: ['notifications', 'unread-count'] as const,
+  storage: (query: StorageObjectQuery) => ['storage', query] as const,
 };
 
 export class ApiRequestError extends ApiError {
@@ -234,6 +246,80 @@ export class ApiClient {
     return response.delivery;
   }
 
+  async listStorageObjects(
+    input: Partial<StorageObjectQuery> = {},
+  ): Promise<{ items: StorageObject[]; meta: PaginationMeta }> {
+    const query = storageObjectQuerySchema.parse(input);
+    return this.request(
+      `/api/storage/objects?${this.queryString(query)}`,
+      storageObjectListResponseSchema,
+    );
+  }
+
+  async uploadStorageObject(
+    file: File,
+    input: Omit<CreateStorageUploadRequest, 'filename' | 'contentType' | 'sizeBytes'>,
+  ): Promise<StorageObject> {
+    const request = createStorageUploadRequestSchema.parse({
+      ...input,
+      filename: file.name,
+      contentType: file.type || 'application/octet-stream',
+      sizeBytes: file.size,
+    });
+    const authorization = await this.request(
+      '/api/storage/uploads',
+      storageUploadAuthorizationSchema,
+      { method: 'POST', body: JSON.stringify(request) },
+    );
+    if (authorization.upload.method === 'POST') {
+      const form = new FormData();
+      form.set('file', file);
+      const response = await this.fetcher(this.resolveUrl(authorization.upload.url), {
+        method: 'POST',
+        body: form,
+        credentials: 'include',
+        headers: this.csrfToken ? { 'x-csrf-token': this.csrfToken } : undefined,
+      });
+      return (await this.parseResponse(response, storageObjectResponseSchema)).object;
+    }
+    const uploaded = await this.fetcher(authorization.upload.url, {
+      method: 'PUT',
+      body: file,
+      headers: authorization.upload.headers,
+    });
+    if (!uploaded.ok) {
+      throw new ApiRequestError(
+        '对象存储直传失败',
+        uploaded.status,
+        'STORAGE_PROVIDER_UPLOAD_FAILED',
+      );
+    }
+    return (
+      await this.request(
+        `/api/storage/uploads/${encodeURIComponent(authorization.object.id)}/complete`,
+        storageObjectResponseSchema,
+        { method: 'POST' },
+      )
+    ).object;
+  }
+
+  async storageObjectAccess(id: string) {
+    return this.request(
+      `/api/storage/objects/${encodeURIComponent(id)}/access`,
+      storageAccessResponseSchema,
+    );
+  }
+
+  async deleteStorageObject(id: string): Promise<StorageObject> {
+    return (
+      await this.request(
+        `/api/storage/objects/${encodeURIComponent(id)}`,
+        storageObjectResponseSchema,
+        { method: 'DELETE' },
+      )
+    ).object;
+  }
+
   async listNotifications(
     input: Partial<NotificationQuery> = {},
   ): Promise<{ items: Notification[]; meta: PaginationMeta }> {
@@ -327,6 +413,10 @@ export class ApiClient {
       headers,
       credentials: 'include',
     });
+    return this.parseResponse(response, schema);
+  }
+
+  private async parseResponse<T>(response: Response, schema: ZodType<T>): Promise<T> {
     const payload: unknown = await response.json().catch(() => null);
     if (!response.ok) {
       const parsed = apiErrorResponseSchema.safeParse(payload);
@@ -347,6 +437,10 @@ export class ApiClient {
       );
     }
     return schema.parse(payload);
+  }
+
+  private resolveUrl(path: string): string {
+    return /^https?:\/\//.test(path) ? path : `${this.baseUrl}${path}`;
   }
 
   private queryString(query: Record<string, unknown>): string {
@@ -484,6 +578,44 @@ export function useSendTestMail() {
       void queryClient.invalidateQueries({ queryKey: ['mail'] });
       void queryClient.invalidateQueries({ queryKey: ['jobs'] });
     },
+  });
+}
+
+export function useStorageObjects(input: Partial<StorageObjectQuery> = {}) {
+  const api = useApiClient();
+  const query = storageObjectQuerySchema.parse(input);
+  return useQuery({
+    queryKey: queryKeys.storage(query),
+    queryFn: () => api.listStorageObjects(query),
+  });
+}
+
+export function useUploadStorageObject() {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      file,
+      input,
+    }: {
+      file: File;
+      input: Omit<CreateStorageUploadRequest, 'filename' | 'contentType' | 'sizeBytes'>;
+    }) => api.uploadStorageObject(file, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['storage'] }),
+  });
+}
+
+export function useStorageObjectAccess() {
+  const api = useApiClient();
+  return useMutation({ mutationFn: (id: string) => api.storageObjectAccess(id) });
+}
+
+export function useDeleteStorageObject() {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.deleteStorageObject(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['storage'] }),
   });
 }
 
