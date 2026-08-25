@@ -142,4 +142,64 @@ describe('ApiClient', () => {
     expect(uploadRequest?.body).toBeInstanceOf(FormData);
     expect(new Headers(uploadRequest?.headers).get('x-csrf-token')).toBe(identity.csrfToken);
   });
+
+  it('creates and operates provider-neutral payment intents with CSRF protection', async () => {
+    const intent = {
+      id: '9f2148c5-7ddb-4b17-85f7-700eab5ba697',
+      provider: 'mock',
+      merchantOrderId: 'order-20260825-1',
+      providerTransactionId: null,
+      subject: '服务费',
+      description: null,
+      amountMinor: 12_800,
+      refundedAmountMinor: 0,
+      currency: 'CNY',
+      status: 'pending',
+      checkoutUrl: '/admin/payments?intent=1',
+      metadata: {},
+      expiresAt: '2026-08-25T02:00:00Z',
+      paidAt: null,
+      closedAt: null,
+      createdBy: identity.user.id,
+      lastError: null,
+      createdAt: '2026-08-25T01:00:00Z',
+      updatedAt: '2026-08-25T01:00:00Z',
+    };
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(response(identity))
+      .mockResolvedValueOnce(response({ intent }))
+      .mockResolvedValueOnce(response({ intent: { ...intent, status: 'succeeded' } }));
+    const client = new ApiClient({ fetch: fetcher });
+    await client.login({ email: 'owner@example.com', password: 'password' });
+    await client.createPaymentIntent({
+      merchantOrderId: intent.merchantOrderId,
+      subject: intent.subject,
+      amountMinor: intent.amountMinor,
+      provider: 'mock',
+      currency: 'CNY',
+      expiresInSeconds: 1_800,
+      metadata: {},
+    });
+    const succeeded = await client.mockSucceedPaymentIntent(intent.id);
+
+    expect(succeeded.status).toBe('succeeded');
+    expect(fetcher.mock.calls[1]?.[0]).toBe('/api/payments/intents');
+    expect(fetcher.mock.calls[2]?.[0]).toBe(`/api/payments/intents/${intent.id}/mock-succeed`);
+    expect(new Headers(fetcher.mock.calls[2]?.[1]?.headers).get('x-csrf-token')).toBe(
+      identity.csrfToken,
+    );
+  });
+
+  it('validates refund input before sending payment requests', async () => {
+    const fetcher = vi.fn<typeof fetch>();
+    const client = new ApiClient({ fetch: fetcher });
+    await expect(
+      client.createPaymentRefund('9f2148c5-7ddb-4b17-85f7-700eab5ba697', {
+        merchantRefundId: '../invalid',
+        amountMinor: 100,
+      }),
+    ).rejects.toBeDefined();
+    expect(fetcher).not.toHaveBeenCalled();
+  });
 });

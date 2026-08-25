@@ -76,5 +76,8 @@ Business Starter 当前提供四个只随应用源码演进的私有 workspace�
 - API Client 通过继承公共 `ApiError` 只补充客户端 request ID，不重复定义状态码、错误码和详情；
 - Settings 使用 `@lingcoo-tech/crypto` 的版本化 AES-256-GCM 信封，不复制加解密原语；
 - Nest/Fastify 异常适配、Cookie 会话和权限编排继续保留在 Business Starter。
+- Payments 使用 `alipay-sdk` 和 `wechatpay-axios-plugin` 承担供应商协议、签名、验签与解密；
+  应用只保留状态机、幂等、补偿、Outbox、Settings、Audit 和 Admin 编排。
 
-`@lingcoo-tech/mailer` 等到 Mail 模块实际落地时接入，不提前增加空依赖。
+`@lingcoo-tech/mailer` 已由 Mail 模块实际接入；支付适配器仍包含供应商语义，不抽成新的
+`@lingcoo-tech/*` 公共 package。

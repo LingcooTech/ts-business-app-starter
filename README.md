@@ -13,10 +13,12 @@ Starter 的长期定位和验收标准见[质量标准](docs/quality-bar.md)。
 设置加密、密钥轮换和不可变审计见[Settings 与 Audit](docs/settings-audit.md)。
 PostgreSQL Jobs、Outbox、邮件与通知见[异步基础](docs/async-foundation.md)。
 对象存储、上传授权、安全策略与 Provider 配置见[对象存储](docs/object-storage.md)。
+支付 Provider、回调安全、补偿任务与退款语义见[支付基础设施](docs/payments.md)。
+支付阶段开发和验收结论见[Stage 7 支付验收](docs/payments-acceptance.md)。
 
-> 当前状态：仓库计划阶段 6 已完成。独立仓库基线、Contracts、Identity、Access Control、
+> 当前状态：仓库计划阶段 7 已完成。独立仓库基线、Contracts、Identity、Access Control、
 > 共享 UI、API Client、Admin/Web 应用壳、Settings、Audit、Jobs、Outbox、Mail、Notifications
-> 与多 Provider 对象存储已完成；下一阶段是支付。
+> 多 Provider 对象存储与支付基础设施已完成；下一阶段是产品化交付。
 
 ## 1. 项目定位
 

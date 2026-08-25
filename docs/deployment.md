@@ -120,6 +120,13 @@ API 使用同一数据库和加密配置，且多个 Worker 副本不要配置�
 Settings 加密保存。公共 Bucket/CDN 才配置 `STORAGE_PUBLIC_BASE_URL`，否则系统返回短期签名
 访问 URL。完整配置、安全限制和 Provider 边界见[对象存储](object-storage.md)。
 
+生产支付必须选择 `PAYMENT_PROVIDER=alipay` 或 `wechat` 并配置对应商户凭据；Mock 在生产
+运行时会被拒绝。`PAYMENT_NOTIFY_BASE_URL` 必须是 Provider 可访问的 HTTPS API 根地址，代理
+必须保留回调原始请求体和微信签名头。支付宝配置 App ID、应用私钥、支付宝公钥、网关与浏览器
+返回地址；微信配置商户号、App ID、商户证书序列号、商户私钥、平台证书/公钥 JSON 和 32 字节
+API v3 Key。凭据应进入 Secret 或加密 Settings，不能提交到 Git。上线前还需用沙箱或小额真实
+交易验证支付、异步回调、查单、关闭、退款和证书轮换。完整边界见[支付基础设施](payments.md)。
+
 ## Image tags and rollback
 
 每次发布使用两个标签：

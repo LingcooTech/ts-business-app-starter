@@ -14,6 +14,10 @@ import {
   permissionKeySchema,
   settingViewSchema,
   createStorageUploadRequestSchema,
+  createPaymentIntentRequestSchema,
+  createPaymentRefundRequestSchema,
+  paymentIntentSchema,
+  paymentRefundSchema,
 } from './index.js';
 
 describe('shared API contracts', () => {
@@ -176,5 +180,72 @@ describe('shared API contracts', () => {
         prefix: '../escape',
       }),
     ).toThrow();
+  });
+
+  it('validates payment intents and refunds in integer minor units', () => {
+    expect(
+      createPaymentIntentRequestSchema.parse({
+        merchantOrderId: 'order_20260825-001',
+        subject: '年度服务费',
+        amountMinor: 12_800,
+      }),
+    ).toMatchObject({ currency: 'CNY', expiresInSeconds: 1_800, metadata: {} });
+    expect(
+      createPaymentRefundRequestSchema.parse({
+        merchantRefundId: 'refund_20260825-001',
+        amountMinor: 2_800,
+      }).amountMinor,
+    ).toBe(2_800);
+    expect(() =>
+      createPaymentIntentRequestSchema.parse({
+        merchantOrderId: 'order-1',
+        subject: 'Invalid amount',
+        amountMinor: -1,
+      }),
+    ).toThrow();
+    expect(() =>
+      createPaymentRefundRequestSchema.parse({ merchantRefundId: '../escape', amountMinor: 1 }),
+    ).toThrow();
+  });
+
+  it('accepts persisted payment records without exposing floating-point money', () => {
+    const common = {
+      id: '9f2148c5-7ddb-4b17-85f7-700eab5ba697',
+      createdBy: null,
+      createdAt: '2026-08-25T01:00:00Z',
+      updatedAt: '2026-08-25T01:00:00Z',
+      lastError: null,
+    };
+    expect(
+      paymentIntentSchema.parse({
+        ...common,
+        provider: 'alipay',
+        merchantOrderId: 'order-1',
+        providerTransactionId: null,
+        subject: 'Service',
+        description: null,
+        amountMinor: 100,
+        refundedAmountMinor: 0,
+        currency: 'CNY',
+        status: 'pending',
+        checkoutUrl: 'https://example.com/pay',
+        metadata: {},
+        expiresAt: '2026-08-25T01:30:00Z',
+        paidAt: null,
+        closedAt: null,
+      }).amountMinor,
+    ).toBe(100);
+    expect(
+      paymentRefundSchema.parse({
+        ...common,
+        paymentIntentId: 'fdda765f-fc57-5604-a269-52a7df8164ec',
+        merchantRefundId: 'refund-1',
+        providerRefundId: null,
+        amountMinor: 50,
+        reason: null,
+        status: 'pending',
+        refundedAt: null,
+      }).amountMinor,
+    ).toBe(50);
   });
 });

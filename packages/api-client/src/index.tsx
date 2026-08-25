@@ -13,6 +13,8 @@ import {
   apiErrorResponseSchema,
   currentPermissionsSchema,
   createAnnouncementRequestSchema,
+  createPaymentIntentRequestSchema,
+  createPaymentRefundRequestSchema,
   createStorageUploadRequestSchema,
   jobDetailSchema,
   jobListResponseSchema,
@@ -25,6 +27,12 @@ import {
   outboxEventSchema,
   outboxListResponseSchema,
   outboxQuerySchema,
+  paymentIntentListResponseSchema,
+  paymentIntentQuerySchema,
+  paymentIntentResponseSchema,
+  paymentRefundListResponseSchema,
+  paymentRefundQuerySchema,
+  paymentRefundResponseSchema,
   queuedMailResponseSchema,
   retryJobResponseSchema,
   sendTestMailRequestSchema,
@@ -42,6 +50,8 @@ import {
   type AuditQuery,
   type AuditLog,
   type CreateAnnouncementRequest,
+  type CreatePaymentIntentRequest,
+  type CreatePaymentRefundRequest,
   type CreateStorageUploadRequest,
   type ClearSettingRequest,
   type ChangePasswordRequest,
@@ -57,6 +67,10 @@ import {
   type NotificationQuery,
   type OutboxEvent,
   type OutboxQuery,
+  type PaymentIntent,
+  type PaymentIntentQuery,
+  type PaymentRefund,
+  type PaymentRefundQuery,
   type PaginationMeta,
   type SaveSettingRequest,
   type SettingTestResponse,
@@ -69,7 +83,15 @@ import { ApiError } from '@lingcoo-tech/http';
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { z, type ZodType } from 'zod';
 
-export type { StorageObject, StorageVisibility } from '@ts-business-app-starter/contracts';
+export type {
+  PaymentIntent,
+  PaymentIntentStatus,
+  PaymentProvider,
+  PaymentRefund,
+  PaymentRefundStatus,
+  StorageObject,
+  StorageVisibility,
+} from '@ts-business-app-starter/contracts';
 
 const queryKeys = {
   session: ['identity', 'session'] as const,
@@ -82,6 +104,8 @@ const queryKeys = {
   notifications: (query: NotificationQuery) => ['notifications', query] as const,
   unreadNotifications: ['notifications', 'unread-count'] as const,
   storage: (query: StorageObjectQuery) => ['storage', query] as const,
+  paymentIntents: (query: PaymentIntentQuery) => ['payments', 'intents', query] as const,
+  paymentRefunds: (query: PaymentRefundQuery) => ['payments', 'refunds', query] as const,
 };
 
 export class ApiRequestError extends ApiError {
@@ -318,6 +342,89 @@ export class ApiClient {
         { method: 'DELETE' },
       )
     ).object;
+  }
+
+  async listPaymentIntents(
+    input: Partial<PaymentIntentQuery> = {},
+  ): Promise<{ items: PaymentIntent[]; meta: PaginationMeta }> {
+    const query = paymentIntentQuerySchema.parse(input);
+    return this.request(
+      `/api/payments/intents?${this.queryString(query)}`,
+      paymentIntentListResponseSchema,
+    );
+  }
+
+  async createPaymentIntent(input: CreatePaymentIntentRequest): Promise<PaymentIntent> {
+    const request = createPaymentIntentRequestSchema.parse(input);
+    const response = await this.request('/api/payments/intents', paymentIntentResponseSchema, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+    return response.intent;
+  }
+
+  async queryPaymentIntent(id: string): Promise<PaymentIntent> {
+    return (
+      await this.request(
+        `/api/payments/intents/${encodeURIComponent(id)}/query`,
+        paymentIntentResponseSchema,
+        { method: 'POST' },
+      )
+    ).intent;
+  }
+
+  async closePaymentIntent(id: string): Promise<PaymentIntent> {
+    return (
+      await this.request(
+        `/api/payments/intents/${encodeURIComponent(id)}/close`,
+        paymentIntentResponseSchema,
+        { method: 'POST' },
+      )
+    ).intent;
+  }
+
+  async mockSucceedPaymentIntent(id: string): Promise<PaymentIntent> {
+    return (
+      await this.request(
+        `/api/payments/intents/${encodeURIComponent(id)}/mock-succeed`,
+        paymentIntentResponseSchema,
+        { method: 'POST' },
+      )
+    ).intent;
+  }
+
+  async createPaymentRefund(
+    paymentIntentId: string,
+    input: CreatePaymentRefundRequest,
+  ): Promise<PaymentRefund> {
+    const request = createPaymentRefundRequestSchema.parse(input);
+    return (
+      await this.request(
+        `/api/payments/intents/${encodeURIComponent(paymentIntentId)}/refunds`,
+        paymentRefundResponseSchema,
+        { method: 'POST', body: JSON.stringify(request) },
+      )
+    ).refund;
+  }
+
+  async listPaymentRefunds(
+    input: Partial<PaymentRefundQuery> = {},
+  ): Promise<{ items: PaymentRefund[]; meta: PaginationMeta }> {
+    const query = paymentRefundQuerySchema.parse(input);
+    return this.request(
+      `/api/payments/refunds?${this.queryString(query)}`,
+      paymentRefundListResponseSchema,
+    );
+  }
+
+  async queryPaymentRefund(id: string): Promise<PaymentRefund> {
+    return (
+      await this.request(
+        `/api/payments/refunds/${encodeURIComponent(id)}/query`,
+        paymentRefundResponseSchema,
+        { method: 'POST' },
+      )
+    ).refund;
   }
 
   async listNotifications(
@@ -617,6 +724,65 @@ export function useDeleteStorageObject() {
     mutationFn: (id: string) => api.deleteStorageObject(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['storage'] }),
   });
+}
+
+export function usePaymentIntents(input: Partial<PaymentIntentQuery> = {}) {
+  const api = useApiClient();
+  const query = paymentIntentQuerySchema.parse(input);
+  return useQuery({
+    queryKey: queryKeys.paymentIntents(query),
+    queryFn: () => api.listPaymentIntents(query),
+  });
+}
+
+function usePaymentMutation<TInput, TOutput>(mutationFn: (input: TInput) => Promise<TOutput>) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payments'] }),
+  });
+}
+
+export function useCreatePaymentIntent() {
+  const api = useApiClient();
+  return usePaymentMutation((input: CreatePaymentIntentRequest) => api.createPaymentIntent(input));
+}
+
+export function useQueryPaymentIntent() {
+  const api = useApiClient();
+  return usePaymentMutation((id: string) => api.queryPaymentIntent(id));
+}
+
+export function useClosePaymentIntent() {
+  const api = useApiClient();
+  return usePaymentMutation((id: string) => api.closePaymentIntent(id));
+}
+
+export function useMockSucceedPaymentIntent() {
+  const api = useApiClient();
+  return usePaymentMutation((id: string) => api.mockSucceedPaymentIntent(id));
+}
+
+export function useCreatePaymentRefund() {
+  const api = useApiClient();
+  return usePaymentMutation(
+    ({ paymentIntentId, input }: { paymentIntentId: string; input: CreatePaymentRefundRequest }) =>
+      api.createPaymentRefund(paymentIntentId, input),
+  );
+}
+
+export function usePaymentRefunds(input: Partial<PaymentRefundQuery> = {}) {
+  const api = useApiClient();
+  const query = paymentRefundQuerySchema.parse(input);
+  return useQuery({
+    queryKey: queryKeys.paymentRefunds(query),
+    queryFn: () => api.listPaymentRefunds(query),
+  });
+}
+
+export function useQueryPaymentRefund() {
+  const api = useApiClient();
+  return usePaymentMutation((id: string) => api.queryPaymentRefund(id));
 }
 
 export function useNotifications(input: Partial<NotificationQuery> = {}) {

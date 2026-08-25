@@ -6,6 +6,7 @@ import helmet from '@fastify/helmet';
 import cookie from '@fastify/cookie';
 import fastifyStatic from '@fastify/static';
 import multipart from '@fastify/multipart';
+import rawBody from 'fastify-raw-body';
 import { RequestMethod } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -29,6 +30,7 @@ export async function configureHttpApplication(app: NestFastifyApplication): Pro
 
   app.enableShutdownHooks();
   await app.register(cookie);
+  await app.register(rawBody, { global: false, encoding: 'utf8', runFirst: true });
   await app.register(multipart, {
     limits: { files: 1, fileSize: config.getOrThrow<number>('STORAGE_MAX_UPLOAD_BYTES') },
   });

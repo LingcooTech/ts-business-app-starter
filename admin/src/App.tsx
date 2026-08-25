@@ -14,6 +14,7 @@ import { StoragePage } from './features/storage/page';
 import { JobsPage } from './features/jobs/page';
 import { MailPage } from './features/mail/page';
 import { NotificationsPage } from './features/notifications/page';
+import { PaymentsPage } from './features/payments/page';
 import { UiPage } from './features/ui-showcase/page';
 
 export function App() {
@@ -41,6 +42,9 @@ export function App() {
           </Route>
           <Route element={<RequirePermission permission="storage.read" />}>
             <Route path="storage" element={<StoragePage />} />
+          </Route>
+          <Route element={<RequirePermission permission="payments.read" />}>
+            <Route path="payments" element={<PaymentsPage />} />
           </Route>
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="foundation" element={<FoundationPage />} />

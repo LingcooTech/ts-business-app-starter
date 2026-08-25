@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { entityIdSchema, isoDateTimeSchema, requestIdSchema } from './common.js';
 import { createPaginatedResponseSchema, paginationQuerySchema } from './pagination.js';
 
-export const auditActorTypeSchema = z.enum(['user', 'system', 'job']);
+export const auditActorTypeSchema = z.enum(['user', 'system', 'job', 'provider']);
 export const auditOutcomeSchema = z.enum(['success', 'failure']);
 
 export const auditLogSchema = z.object({

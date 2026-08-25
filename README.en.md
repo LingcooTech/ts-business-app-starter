@@ -14,10 +14,11 @@ See [前端应用基础](docs/frontend-foundation.md) for frontend workspace, ro
 See [Settings and Audit](docs/settings-audit.md) for encryption, key rotation, and immutable audit events.
 See [Jobs, Transactional Outbox, Mail, and Notifications](docs/async-foundation.md) for the asynchronous runtime.
 See [Object Storage](docs/object-storage.md) for upload authorization, security policy, and provider configuration.
+See [Payments](docs/payments.md) for provider adapters, callback security, compensation, and refunds.
 
-> Current status: repository phase 6 is complete. The independent baseline, Contracts, Identity,
+> Current status: repository phase 7 is complete. The independent baseline, Contracts, Identity,
 > Access Control, shared UI, API Client, Admin/Web application shells, Settings, Audit, Jobs, Outbox,
-> Mail, Notifications, and multi-provider object storage are delivered. Payments are next.
+> Mail, Notifications, multi-provider object storage, and Payments are delivered. Product delivery is next.
 
 ## 1. Positioning
 

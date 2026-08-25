@@ -103,6 +103,24 @@ export const environmentSchema = z
       .default('false')
       .transform((value) => value === 'true'),
     STORAGE_PUBLIC_BASE_URL: optionalEnvironmentValue(z.string().trim().url().max(1000)),
+    PAYMENT_PROVIDER: z.enum(['mock', 'alipay', 'wechat']).default('mock'),
+    PAYMENT_NOTIFY_BASE_URL: z.string().trim().url().default('http://localhost:8090'),
+    PAYMENT_CALLBACK_TOLERANCE_SECONDS: z.coerce.number().int().min(60).max(3_600).default(300),
+    PAYMENT_ALIPAY_APP_ID: optionalEnvironmentValue(z.string().trim().min(1).max(64)),
+    PAYMENT_ALIPAY_PRIVATE_KEY: optionalEnvironmentValue(z.string().min(100).max(20_000)),
+    PAYMENT_ALIPAY_PUBLIC_KEY: optionalEnvironmentValue(z.string().min(100).max(20_000)),
+    PAYMENT_ALIPAY_GATEWAY: z
+      .string()
+      .trim()
+      .url()
+      .default('https://openapi.alipay.com/gateway.do'),
+    PAYMENT_ALIPAY_RETURN_URL: optionalEnvironmentValue(z.string().trim().url().max(1000)),
+    PAYMENT_WECHAT_MCH_ID: optionalEnvironmentValue(z.string().trim().min(1).max(64)),
+    PAYMENT_WECHAT_APP_ID: optionalEnvironmentValue(z.string().trim().min(1).max(64)),
+    PAYMENT_WECHAT_MERCHANT_SERIAL: optionalEnvironmentValue(z.string().trim().min(1).max(128)),
+    PAYMENT_WECHAT_PRIVATE_KEY: optionalEnvironmentValue(z.string().min(100).max(20_000)),
+    PAYMENT_WECHAT_PLATFORM_CERTIFICATES: optionalEnvironmentValue(z.string().min(2).max(100_000)),
+    PAYMENT_WECHAT_API_V3_KEY: optionalEnvironmentValue(z.string().length(32)),
     BOOTSTRAP_OWNER_EMAIL: z.string().trim().optional(),
     BOOTSTRAP_OWNER_PASSWORD: z.string().optional(),
   })
@@ -169,6 +187,39 @@ export const environmentSchema = z
         path: ['STORAGE_S3_ACCESS_KEY'],
         message: 'access key and secret key must be provided together',
       });
+    }
+    if (value.PAYMENT_PROVIDER === 'alipay') {
+      for (const key of [
+        'PAYMENT_ALIPAY_APP_ID',
+        'PAYMENT_ALIPAY_PRIVATE_KEY',
+        'PAYMENT_ALIPAY_PUBLIC_KEY',
+      ] as const) {
+        if (!value[key]) {
+          context.addIssue({
+            code: 'custom',
+            path: [key],
+            message: 'must be configured when PAYMENT_PROVIDER is alipay',
+          });
+        }
+      }
+    }
+    if (value.PAYMENT_PROVIDER === 'wechat') {
+      for (const key of [
+        'PAYMENT_WECHAT_MCH_ID',
+        'PAYMENT_WECHAT_APP_ID',
+        'PAYMENT_WECHAT_MERCHANT_SERIAL',
+        'PAYMENT_WECHAT_PRIVATE_KEY',
+        'PAYMENT_WECHAT_PLATFORM_CERTIFICATES',
+        'PAYMENT_WECHAT_API_V3_KEY',
+      ] as const) {
+        if (!value[key]) {
+          context.addIssue({
+            code: 'custom',
+            path: [key],
+            message: 'must be configured when PAYMENT_PROVIDER is wechat',
+          });
+        }
+      }
     }
     if (
       value.NODE_ENV === 'production' &&

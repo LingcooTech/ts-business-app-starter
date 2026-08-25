@@ -313,6 +313,33 @@ if (deletedStorage.object.status !== 'deleted') {
   throw new Error('storage deletion did not persist the deleted state');
 }
 
+const paymentList = await json(
+  await fetch(`${baseUrl}/api/payments/intents?page=1&pageSize=20`, {
+    headers: { cookie: cookieHeader },
+  }),
+);
+if (paymentList.items.length !== 0) {
+  throw new Error('production payment smoke expected an empty payment ledger');
+}
+
+const rejectedMockPayment = await fetch(`${baseUrl}/api/payments/intents`, {
+  method: 'POST',
+  headers: {
+    cookie: cookieHeader,
+    'content-type': 'application/json',
+    'x-csrf-token': identity.csrfToken,
+  },
+  body: JSON.stringify({
+    merchantOrderId: 'production-mock-must-fail',
+    subject: 'Production mock rejection',
+    amountMinor: 100,
+    provider: 'mock',
+  }),
+});
+if (rejectedMockPayment.ok) {
+  throw new Error('production accepted the Mock payment provider');
+}
+
 const csrfRejected = await fetch(`${baseUrl}/api/auth/logout`, {
   method: 'POST',
   headers: { cookie: cookieHeader },
@@ -331,5 +358,5 @@ const revoked = await fetch(`${baseUrl}/api/auth/me`, { headers: { cookie: cooki
 if (revoked.status !== 401) throw new Error(`revoked session returned ${revoked.status}`);
 
 console.log(
-  'identity, access-control, settings, audit, jobs, outbox, mail, notifications, and storage smoke test passed',
+  'identity, access-control, settings, audit, jobs, outbox, mail, notifications, storage, and payment safety smoke test passed',
 );

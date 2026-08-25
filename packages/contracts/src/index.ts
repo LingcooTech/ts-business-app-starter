@@ -8,5 +8,6 @@ export * from './mail.js';
 export * from './notifications.js';
 export * from './outbox.js';
 export * from './pagination.js';
+export * from './payments.js';
 export * from './settings.js';
 export * from './storage.js';

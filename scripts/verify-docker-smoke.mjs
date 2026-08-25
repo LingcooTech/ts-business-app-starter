@@ -26,6 +26,7 @@ const env = [
   'SETTINGS_ENCRYPTION_CURRENT_KEY_ID=smoke-v1',
   'SETTINGS_ENCRYPTION_KEYS={"smoke-v1":"smoke-settings-encryption-key-123456789"}',
   'MAIL_TRANSPORT=log',
+  'PAYMENT_PROVIDER=mock',
   'JOB_POLL_INTERVAL_MS=50',
   'JOB_BACKOFF_BASE_MS=100',
   'JOB_BACKOFF_MAX_MS=200',
@@ -119,6 +120,7 @@ try {
     '/admin/mail',
     '/admin/notifications',
     '/admin/storage',
+    '/admin/payments',
   ]) {
     execFileSync(
       'curl',
@@ -175,6 +177,22 @@ try {
   ]);
   if (storageState !== '1,3') {
     throw new Error(`stage 6 storage invariants failed: ${storageState}`);
+  }
+
+  const paymentState = composeCapture([
+    'exec',
+    '-T',
+    'postgres',
+    'psql',
+    '-U',
+    'app',
+    '-d',
+    'app',
+    '-tAc',
+    "select (select count(*) from information_schema.tables where table_schema = 'public' and table_name in ('payment_intents', 'payment_refunds', 'payment_callbacks')) || ',' || (select count(*) from payment_intents) || ',' || (select count(*) from pg_constraint where conname = 'audit_logs_actor_type_check' and pg_get_constraintdef(oid) like '%provider%')",
+  ]);
+  if (paymentState !== '3,0,1') {
+    throw new Error(`stage 7 payment invariants failed: ${paymentState}`);
   }
 
   let immutable = false;

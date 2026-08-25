@@ -69,7 +69,7 @@ Business Starter 提供或计划提供以下非行业化模块：
 - notifications（已交付）；
 - mail（已交付）；
 - storage（已交付）；
-- payments。
+- payments（已交付）。
 
 这些模块不拥有教育、零售、订阅授权或其他行业数据模型。
 
@@ -92,6 +92,13 @@ Storage 通过应用自有的 `ObjectStoragePort` 隔离 Provider。`local` Adap
 `s3` Adapter 使用官方 AWS SDK v3 连接 AWS S3 或可配置的 S3-compatible Endpoint。Controller、
 Contracts 和 Admin 不接触 Provider 凭据或签名协议；上传完成前必须经过大小与 MIME 元数据复核，
 对象元数据和审计记录保存在 PostgreSQL。详细边界见[对象存储](object-storage.md)。
+
+Payments 通过应用自有的 `PaymentProviderPort` 隔离 Provider。支付宝使用官方
+`alipay-sdk`，微信支付 API v3 使用 `wechatpay-axios-plugin`，不自研 RSA2、请求签名、RSA
+验签或 AES-256-GCM 解密。支付意图、退款、回调幂等、补偿 Jobs、状态机和 Outbox 由应用拥有；
+回调必须基于原始请求体验签，并校验商户身份、金额、币种和 Provider 事务 ID。支付模块只发布
+`payments.succeeded` 与 `payments.refunded` 事实事件，不修改任何行业订单。详细边界见
+[支付基础设施](payments.md)。
 
 ## Runtime topology
 

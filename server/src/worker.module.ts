@@ -8,6 +8,7 @@ import { JobsModule } from './modules/jobs/public';
 import { MailModule } from './modules/mail/public';
 import { NotificationsModule } from './modules/notifications/public';
 import { OutboxModule } from './modules/outbox/public';
+import { PaymentsModule } from './modules/payments/public';
 import { SettingsModule } from './modules/settings/public';
 
 @Module({
@@ -20,6 +21,7 @@ import { SettingsModule } from './modules/settings/public';
     OutboxModule,
     MailModule,
     NotificationsModule,
+    PaymentsModule,
   ],
   providers: [WorkerRunner],
 })

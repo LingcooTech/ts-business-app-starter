@@ -12,9 +12,9 @@ const descriptions: Record<string, string> = {
   'audit.read': '查看审计事件',
   'jobs.read': '查看后台任务',
   'jobs.manage': '管理与重试后台任务',
-  'payments.read': '查看支付记录',
-  'payments.manage': '执行支付管理操作',
   'notifications.manage': '管理通知投递',
+  'payments.read': '查看支付与退款',
+  'payments.manage': '创建、查询、关闭支付与发起退款',
 };
 
 export function AccessPage() {

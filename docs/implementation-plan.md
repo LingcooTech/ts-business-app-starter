@@ -89,7 +89,7 @@ npx @lingcoo-tech/create-ts-business-app-starter@latest my-business-app
 
 ### 阶段 7：支付
 
-状态：下一阶段。
+状态：已完成。
 
 - Payment Provider Port；
 - Mock、支付宝和微信支付 API v3 Adapter；
@@ -98,6 +98,8 @@ npx @lingcoo-tech/create-ts-business-app-starter@latest my-business-app
 - 支付管理后台。
 
 ### 阶段 8：产品化交付
+
+状态：下一阶段。
 
 - 创建 CLI；
 - 包名和环境变量替换；
