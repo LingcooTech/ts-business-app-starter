@@ -7,6 +7,7 @@ settings:
 
 overrides:
   '@nestjs/swagger>js-yaml': 5.2.2
+  nodemailer: 9.0.5
 
 importers:
   .:
@@ -4317,10 +4318,10 @@ packages:
       }
     engines: { node: '>=18' }
 
-  nodemailer@7.0.13:
+  nodemailer@9.0.5:
     resolution:
       {
-        integrity: sha512-PNDFSJdP+KFgdsG3ZzMXCgquO7I6McjY2vlqILjtJd0hy8wEvtugS9xKRF2NWlPNGxvLCXlTNIae4serI7dinw==,
+        integrity: sha512-wvjiKvjczmsN7U/8006JOdXubgBk2XFAbioDMbT+sM7cPs0QrhJTa6KBRX7P5REGGkDcLUz/EarWidb8G8C1jQ==,
       }
     engines: { node: '>=6.0.0' }
 
@@ -6407,7 +6408,7 @@ snapshots:
 
   '@lingcoo-tech/mailer@0.1.1':
     dependencies:
-      nodemailer: 7.0.13
+      nodemailer: 9.0.5
 
   '@lingcoo-tech/security@0.1.1':
     dependencies:
@@ -7936,7 +7937,7 @@ snapshots:
 
   node-releases@2.0.53: {}
 
-  nodemailer@7.0.13: {}
+  nodemailer@9.0.5: {}
 
   object-inspect@1.13.4: {}
 

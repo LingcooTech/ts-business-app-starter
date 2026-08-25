@@ -165,12 +165,15 @@ corepack pnpm smoke:module-generator
 corepack pnpm smoke:generated
 corepack pnpm smoke:docker
 E2E_BASE_URL=http://127.0.0.1:18193 corepack pnpm e2e
+corepack pnpm audit --prod --audit-level high
 git diff --check
 ```
 
 Playwright passed both browser tests. The production Docker smoke rebuilt the runtime image, migrated
 and bootstrapped twice, ran one API and two Workers, verified every Admin/Web route and the complete
-Stage 2-7 smoke, then removed all smoke containers, volumes, networks, and images.
+Stage 2-7 smoke, then removed all smoke containers, volumes, networks, and images. The production
+dependency audit reports no known vulnerabilities; `nodemailer` is pinned to patched version `9.0.5`
+through the workspace override until the shared Mailer package updates its own dependency range.
 
 ## Resume protocol
 

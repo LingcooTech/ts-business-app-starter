@@ -27,6 +27,7 @@ storage, and payment foundation without referencing the source repository.
 - `corepack pnpm smoke:module-generator`: passed.
 - `corepack pnpm smoke:generated`: passed after independent install and full quality check.
 - `corepack pnpm smoke:docker`: passed with production image rebuild and cleanup.
+- `corepack pnpm audit --prod --audit-level high`: no known vulnerabilities.
 - Playwright browser E2E: 2 passed.
 
 ## Delivery status
