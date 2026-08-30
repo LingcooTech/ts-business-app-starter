@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@lingcoo-tech/http": "0.1.1",
-    "@tanstack/react-query": "5.102.0",
+    "@tanstack/react-query": "5.102.6",
     "@ts-business-app-starter/contracts": "workspace:*",
     "zod": "4.4.3"
   },
@@ -31,6 +31,6 @@
     "@types/react": "19.2.18",
     "react": "19.2.8",
     "typescript": "5.9.3",
-    "vitest": "4.1.10"
+    "vitest": "4.1.11"
   }
 }
